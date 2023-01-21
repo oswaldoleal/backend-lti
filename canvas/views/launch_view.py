@@ -8,6 +8,7 @@ from pylti1p3.contrib.django import (
 from pylti1p3.contrib.django import DjangoDbToolConf
 
 from django.http.response import JsonResponse
+from django.shortcuts import redirect
 
 
 class LaunchView(APIView):
@@ -28,16 +29,15 @@ class LaunchView(APIView):
         )
 
         message_launch_data = message_launch.get_launch_data()
-
-        return JsonResponse(
+        return redirect("https://localhost:3000/lti-config")
+        """return JsonResponse(
             {
-                "success": False,
-                "errorMsg": "OSWALDO AYUDAME :(",
-                "page_title": "PAGE_TITLE",
-                "is_deep_link_launch": message_launch.is_deep_link_launch(),
-                "launch_data": message_launch.get_launch_data(),
-                "launch_id": message_launch.get_launch_id(),
-                "curr_user_name": message_launch_data.get("name", ""),
-                "curr_diff": 'si',
+                'page_title': 'OSWALDO, HELP',
+                'is_deep_link_launch': message_launch.is_deep_link_launch(),
+                'launch_data': message_launch.get_launch_data(),
+                'launch_id': message_launch.get_launch_id(),
+                'curr_user_name': message_launch_data.get('name', ''),
+                'curr_diff': 'difficulty'
+
             }
-       )
+        )"""
