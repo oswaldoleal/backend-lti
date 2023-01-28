@@ -1,14 +1,13 @@
-from rest_framework.views import APIView
+from django.shortcuts import redirect
 from pylti1p3.contrib.django import DjangoDbToolConf
-from django.http import HttpResponse, JsonResponse
 from pylti1p3.contrib.django import (
     DjangoMessageLaunch,
     DjangoCacheDataStorage,
 )
 from pylti1p3.contrib.django import DjangoDbToolConf
 
-from django.http.response import JsonResponse
 from django.shortcuts import redirect
+from rest_framework.views import APIView
 
 
 class LaunchView(APIView):
@@ -30,14 +29,3 @@ class LaunchView(APIView):
 
         message_launch_data = message_launch.get_launch_data()
         return redirect("https://localhost:3000/lti-config")
-        """return JsonResponse(
-            {
-                'page_title': 'OSWALDO, HELP',
-                'is_deep_link_launch': message_launch.is_deep_link_launch(),
-                'launch_data': message_launch.get_launch_data(),
-                'launch_id': message_launch.get_launch_id(),
-                'curr_user_name': message_launch_data.get('name', ''),
-                'curr_diff': 'difficulty'
-
-            }
-        )"""
