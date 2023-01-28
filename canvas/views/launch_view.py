@@ -1,12 +1,9 @@
 from django.shortcuts import redirect
-from pylti1p3.contrib.django import DjangoDbToolConf
 from pylti1p3.contrib.django import (
     DjangoMessageLaunch,
     DjangoCacheDataStorage,
+    DjangoDbToolConf,
 )
-from pylti1p3.contrib.django import DjangoDbToolConf
-
-from django.shortcuts import redirect
 from rest_framework.views import APIView
 
 

@@ -1,8 +1,8 @@
 from pylti1p3.contrib.django import (
     DjangoOIDCLogin,
     DjangoCacheDataStorage,
+    DjangoDbToolConf,
 )
-from pylti1p3.contrib.django import DjangoDbToolConf
 from rest_framework.views import APIView
 
 

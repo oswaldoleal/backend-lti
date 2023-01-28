@@ -1,8 +1,7 @@
-from rest_framework import generics
-from rest_framework.response import Response
 from api.serializers import UserFormSerializer
 from django.contrib.auth import login, authenticate
-from rest_framework.request import Request
+from rest_framework import generics
+from rest_framework.response import Response
 
 
 class LoginView(generics.CreateAPIView):
