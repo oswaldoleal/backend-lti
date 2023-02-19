@@ -31,7 +31,7 @@ class Course(models.Model):
 
     deployment = models.ForeignKey(
         to=Deployment,
-        related_name='',
+        related_name='deployment',
         on_delete=models.CASCADE,
-        help_text='Relation to corresponding tool deployement on an LTI Platform',
+        help_text='Relation to corresponding tool deployment on an LTI Platform',
     )
