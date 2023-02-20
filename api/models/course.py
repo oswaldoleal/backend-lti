@@ -21,6 +21,7 @@ class Course(models.Model):
     name = models.CharField(
         blank=False,
         null=False,
+        max_length=120,
         help_text='LTI Course name',
     )
 
