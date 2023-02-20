@@ -1,4 +1,4 @@
-from api.models import LTIUser
+from canvas.models import LTIUser
 from rest_framework import authentication
 from pylti1p3.contrib.django import (
     DjangoMessageLaunch,
