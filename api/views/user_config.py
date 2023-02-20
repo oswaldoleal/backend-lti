@@ -1,6 +1,6 @@
+from api.serializers import UserFormSerializer
 from rest_framework import generics
 from rest_framework.response import Response
-from api.serializers import UserFormSerializer
 
 
 class UserConfigView(generics.CreateAPIView):

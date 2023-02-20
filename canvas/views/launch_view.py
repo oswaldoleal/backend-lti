@@ -1,13 +1,7 @@
-from django.shortcuts import redirect
-from pylti1p3.contrib.django import (
-    DjangoMessageLaunch,
-    DjangoCacheDataStorage,
-    DjangoDbToolConf,
-)
-from rest_framework.views import APIView
-
 from canvas.authentication import CanvasAuth
+from django.shortcuts import redirect
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.views import APIView
 
 
 class LaunchView(APIView):

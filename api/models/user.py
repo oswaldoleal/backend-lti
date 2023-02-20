@@ -1,5 +1,5 @@
-from django.db import models
 from django.contrib.auth.models import AbstractBaseUser
+from django.db import models
 from pylti1p3.contrib.django.lti1p3_tool_config.models import LtiTool
 
 

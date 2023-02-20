@@ -1,10 +1,10 @@
 from canvas.models import LTIUser
-from rest_framework import authentication
 from pylti1p3.contrib.django import (
-    DjangoMessageLaunch,
     DjangoCacheDataStorage,
     DjangoDbToolConf,
+    DjangoMessageLaunch,
 )
+from rest_framework import authentication
 
 
 class CanvasAuth(authentication.BaseAuthentication):
@@ -20,5 +20,6 @@ class CanvasAuth(authentication.BaseAuthentication):
 
         user_id = message_launch_data['sub']
         user_roles = message_launch_data['https://purl.imsglobal.org/spec/lti/claim/roles']
+        # TODO: save user in db
 
         return (LTIUser(lti_user_id=user_id, roles=user_roles), None)

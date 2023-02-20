@@ -1,1 +1,1 @@
-from .custom import Custom
+from .basic_auth import BasicAuth
