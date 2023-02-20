@@ -10,16 +10,6 @@ class User(AbstractBaseUser):
         help_text='User email',
     )
 
-    # password = models.CharField(
-    #     max_length=512,
-    #     help_text='User password',
-    # )
-
-    # last_login = models.DateTimeField(
-    #     auto_created=True,
-    #     null=True
-    # )
-
     ltiConfig = models.ForeignKey(
         to=LtiTool,
         on_delete=models.CASCADE,

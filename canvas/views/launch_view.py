@@ -6,8 +6,13 @@ from pylti1p3.contrib.django import (
 )
 from rest_framework.views import APIView
 
+from canvas.authentication import CanvasAuth
+from rest_framework.permissions import IsAuthenticated
+
 
 class LaunchView(APIView):
+    authentication_classes = [CanvasAuth]
+    permission_classes = [IsAuthenticated]
 
     def get_launch_url(self, request):
         target_link_uri = request.POST.get(
@@ -18,11 +23,5 @@ class LaunchView(APIView):
         return target_link_uri
 
     def post(self, request, *args, **kwargs):
-        tool_conf = DjangoDbToolConf()
-        launch_data_storage = DjangoCacheDataStorage()
-        message_launch = DjangoMessageLaunch(
-            request, tool_conf, launch_data_storage=launch_data_storage
-        )
-
-        message_launch_data = message_launch.get_launch_data()
+        # TODO: pass the role and context to the frontend
         return redirect("https://localhost:3000/lti-config")

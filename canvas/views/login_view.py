@@ -9,8 +9,6 @@ from rest_framework.permissions import IsAuthenticated
 
 
 class LoginView(APIView):
-    authentication_classes = [CanvasAuth]
-    permission_classes = [IsAuthenticated]
 
     def get_launch_url(self, request):
         target_link_uri = request.POST.get(
