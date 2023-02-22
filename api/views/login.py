@@ -13,4 +13,4 @@ class LoginView(generics.CreateAPIView):
 
     def post(self, request, *args, **kwargs):
         login(request, request.user)
-        return Response('ok')
+        return Response({'userId': request.user.id})

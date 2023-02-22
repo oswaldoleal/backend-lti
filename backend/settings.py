@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/4.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.1/ref/settings/
 """
-
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -147,3 +147,8 @@ PASSWORD_HASHERS = [
     'django.contrib.auth.hashers.BCryptSHA256PasswordHasher',
     'django.contrib.auth.hashers.ScryptPasswordHasher',
 ]
+
+REDIRECT_URI = os.getenv('REDIRECT_URI')
+TARGET_URI = os.getenv('TARGET_URI')
+OPENID_URL = os.getenv('OPENID_URL')
+PUBLIC_JWK = os.getenv('PUBLIC_JWK')

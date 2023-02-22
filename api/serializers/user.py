@@ -15,7 +15,7 @@ class UserFormSerializer(serializers.ModelSerializer):
         model = User
 
         fields = [
-            'email', 'password'
+            'id', 'email', 'password'
         ]
 
         extra_kwargs = {
