@@ -1,40 +1,40 @@
-import json
-
+from api.models import User
+from backend.settings import REDIRECT_URI, TARGET_URI, OPENID_URL, PUBLIC_JWK
+from django.http import HttpResponse
+from http import HTTPStatus
 from pylti1p3.contrib.django.lti1p3_tool_config.models import LtiTool
 from rest_framework import generics
 from rest_framework.response import Response
 
-from api.models import User
-from api.serializers import UserFormSerializer
-from backend.settings import REDIRECT_URI, TARGET_URI, OPENID_URL, PUBLIC_JWK
+import json
 
 
 class UserConfigView(generics.GenericAPIView):
-    serializer_class = UserFormSerializer
 
     def post(self, request, *args, **kwargs):
-        """TODO: THIS SHOULD UPDATE FIELDS IN THE DATABASE"""
-        """TODO: FIX AND CLEAN THIS ABOMINATION"""
         request_json = json.loads(request.body)
-
-        created_tool = LtiTool.objects.update_or_create(client_id=request_json['clientID'],
-                                                        auth_login_url=request_json['authLoginURL'],
-                                                        auth_token_url=request_json['authTokenURL'],
-                                                        deployment_ids=request_json['deployments'],
-                                                        issuer=request_json['oidcIssuer'],
-                                                        key_set_url=request_json['publicKeyURL'],
-                                                        tool_key_id=1
-                                                        )
-
         user_id = request.GET.get('userId', None)
         user = User.objects.get(id=user_id)
-        user.ltiConfig_id = created_tool.id
-        User.save(user)
 
-        return Response("success")
+        tool, created = LtiTool.objects \
+            .update_or_create(id=user.ltiConfig_id,
+                              defaults={
+                                  "deployment_ids": request_json['deployments'],
+                                  "auth_login_url": request_json['authLoginURL'],
+                                  "auth_token_url": request_json['authTokenURL'],
+                                  "client_id": request_json['clientID'],
+                                  "issuer": request_json['oidcIssuer'],
+                                  "key_set_url": request_json['publicKeyURL'],
+                                  "tool_key_id": 1
+                              }
+                              )
+        if created:
+            user.ltiConfig_id = tool.id
+            User.save(user)
+
+        return HttpResponse(status=HTTPStatus.OK)
 
     def get(self, request, *args, **kwargs):
-        """TODO: FIX AND CLEAN THIS ABOMINATION"""
         user_id = request.GET.get('userId', None)
         user = User.objects.get(id=user_id)
 
@@ -54,7 +54,6 @@ class UserConfigView(generics.GenericAPIView):
             config_values['public_key_url'] = tool.key_set_url
             config_values['auth_token_url'] = tool.auth_token_url
             config_values['deployments'] = tool.deployment_ids
-
 
         return Response(config_values)
         """
