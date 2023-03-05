@@ -54,6 +54,12 @@ class LTIUser(models.Model):
 
     def is_admin(self) -> bool:
         return self.check_role(self.roles, self.ADMIN_ROLES)
+    
+    def is_student(self) -> bool:
+        return self.check_role(self.roles, self.STUDENT_ROLES)
+    
+    def is_instructor(self) -> bool:
+        return self.check_role(self.roles, self.INSTRUCTOR_ROLES)
 
     def check_role(self, roles, role_set) -> bool:
         return any([role in role_set for role in roles])

@@ -16,6 +16,30 @@ class LaunchView(APIView):
             raise Exception('Missing "target_link_uri" param')
         return target_link_uri
 
+    def url_params_to_str(self, params: dict):
+        params_strs = []
+        for key, value in params.items():
+            params_strs.append(f'{key}={value}')
+
+        return '?' + '&'.join(params_strs)
+    
+    def get_context_from_launch_data(self, launch_data):
+        ld_context = launch_data['https://purl.imsglobal.org/spec/lti/claim/context']
+        context = {
+            'context_id': ld_context['id'],
+            'context_type': ld_context['type'][0].split('/')[-1],
+        }
+
+        return context
+
     def post(self, request, *args, **kwargs):
         # TODO: pass the role and context to the frontend
-        return redirect("https://localhost:3000/lti-config")
+        params = {
+            'user_id': request.user.lti_user_id,
+            'is_student': request.user.is_student(),
+            'is_instructor': request.user.is_instructor(),
+        }
+        params.update(self.get_context_from_launch_data(request.launch_data))
+
+        redirect_url = 'https://localhost:3000/redirect' + self.url_params_to_str(params)
+        return redirect(redirect_url)

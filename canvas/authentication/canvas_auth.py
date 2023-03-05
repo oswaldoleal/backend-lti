@@ -17,6 +17,7 @@ class CanvasAuth(authentication.BaseAuthentication):
         )
 
         message_launch_data = message_launch.get_launch_data()
+        request.launch_data = message_launch_data
 
         user_id = message_launch_data['sub']
         user_roles = message_launch_data['https://purl.imsglobal.org/spec/lti/claim/roles']
