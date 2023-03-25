@@ -1,22 +1,13 @@
+from django.contrib.auth.models import AbstractBaseUser
 from django.db import models
-
 from pylti1p3.contrib.django.lti1p3_tool_config.models import LtiTool
 
 
-class User(models.Model):
+class User(AbstractBaseUser):
 
     email = models.EmailField(
         unique=True,
         help_text='User email',
-    )
-
-    password = models.CharField(
-        help_text='User password',
-    )
-
-    last_login = models.DateTimeField(
-        auto_created=True,
-        null=True
     )
 
     ltiConfig = models.ForeignKey(

@@ -1,5 +1,5 @@
-from rest_framework import generics
 from api.serializers import UserFormSerializer
+from rest_framework import generics
 
 
 class RegisterView(generics.CreateAPIView):

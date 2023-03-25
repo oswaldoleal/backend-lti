@@ -12,5 +12,6 @@ class Deployment(models.Model):
     lti_deployment_id = models.CharField(
         blank=False,
         null=False,
+        max_length=120,
         help_text='LTI Deployment ID',
     )

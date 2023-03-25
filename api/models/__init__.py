@@ -1,4 +1,5 @@
-from .course import Course
+from .assignment import Assignment
 from .deployment import Deployment
-from .lti_user import LTIUser
+from .game_data import GameData
+from .run import Run
 from .user import User

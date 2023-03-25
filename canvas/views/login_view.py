@@ -4,9 +4,12 @@ from pylti1p3.contrib.django import (
     DjangoDbToolConf,
 )
 from rest_framework.views import APIView
+from canvas.authentication import CanvasAuth
+from rest_framework.permissions import IsAuthenticated
 
 
 class LoginView(APIView):
+
     def get_launch_url(self, request):
         target_link_uri = request.POST.get(
             'target_link_uri', request.GET.get('target_link_uri')
