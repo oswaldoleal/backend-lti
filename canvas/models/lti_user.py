@@ -18,12 +18,6 @@ class LTIUser(models.Model):
         'membership#Learner',
     ]
 
-    id = models.BigIntegerField(
-        primary_key=True,
-        auto_created=True,
-        help_text='LTI User ID',
-    )
-
     lti_user_id = models.UUIDField(
         help_text='User sub as refered by the LTI platform',
     )

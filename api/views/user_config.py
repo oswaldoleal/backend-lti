@@ -53,7 +53,7 @@ class UserConfigView(generics.GenericAPIView):
             config_values['auth_login_url'] = tool.auth_login_url
             config_values['public_key_url'] = tool.key_set_url
             config_values['auth_token_url'] = tool.auth_token_url
-            config_values['deployments'] = tool.deployment_ids
+            config_values['deployments'] = ','.join(json.loads(tool.deployment_ids))
 
         return Response(config_values)
         """

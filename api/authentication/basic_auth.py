@@ -12,7 +12,7 @@ class BasicAuth(authentication.BaseAuthentication):
         try:
             user = User.objects.get(email=username)
             if check_password(password, user.password):
-                return (user, None)
+                return user, None
             return None
         except User.DoesNotExist:
             return None
