@@ -4,6 +4,7 @@ from api.models import Assignment
 
 
 class AssignmentSerializer(serializers.ModelSerializer):
+    gameId = serializers.IntegerField(source='game.id')
 
     class Meta:
         model = Assignment

@@ -4,7 +4,6 @@ from django.db import models
 
 
 class Assignment(models.Model):
-
     name = models.CharField(
         blank=False,
         null=False,
@@ -29,4 +28,7 @@ class Assignment(models.Model):
         related_name='game',
         on_delete=models.CASCADE)
 
-    rounds = models.SmallIntegerField()
+    attempts = models.PositiveSmallIntegerField(
+        default=3,
+        help_text="Number of attempts a student has for the assignment"
+    )

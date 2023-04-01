@@ -19,7 +19,8 @@ class LTIUser(models.Model):
     ]
 
     lti_user_id = models.UUIDField(
-        help_text='User sub as refered by the LTI platform',
+        primary_key=True,
+        help_text='User sub as referred by the LTI platform',
     )
 
     name = models.CharField(
@@ -39,7 +40,7 @@ class LTIUser(models.Model):
     @property
     def roles(self):
         return self._roles
-    
+
     @roles.setter
     def roles(self, values):
         self._roles = []
@@ -48,10 +49,10 @@ class LTIUser(models.Model):
 
     def is_admin(self) -> bool:
         return self.check_role(self.roles, self.ADMIN_ROLES)
-    
+
     def is_student(self) -> bool:
         return self.check_role(self.roles, self.STUDENT_ROLES)
-    
+
     def is_instructor(self) -> bool:
         return self.check_role(self.roles, self.INSTRUCTOR_ROLES)
 

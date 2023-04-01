@@ -1,3 +1,5 @@
+from pylti1p3.contrib.django import DjangoDbToolConf, DjangoCacheDataStorage, DjangoMessageLaunch
+
 from canvas.authentication import CanvasAuth
 from django.shortcuts import redirect
 from rest_framework.permissions import IsAuthenticated
@@ -22,7 +24,7 @@ class LaunchView(APIView):
             params_strs.append(f'{key}={value}')
 
         return '?' + '&'.join(params_strs)
-    
+
     def get_context_from_launch_data(self, launch_data):
         ld_context = launch_data['https://purl.imsglobal.org/spec/lti/claim/context']
         context = {
@@ -34,10 +36,15 @@ class LaunchView(APIView):
 
     def post(self, request, *args, **kwargs):
         # TODO: pass the role and context to the frontend
+        tool_conf = DjangoDbToolConf()
+        launch_data_storage = DjangoCacheDataStorage()
+        message_launch = DjangoMessageLaunch(request, tool_conf,
+                                             launch_data_storage=launch_data_storage)
         params = {
             'user_id': request.user.lti_user_id,
             'is_student': request.user.is_student(),
             'is_instructor': request.user.is_instructor(),
+            'launch_id': message_launch.get_launch_id()
         }
         params.update(self.get_context_from_launch_data(request.launch_data))
 

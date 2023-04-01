@@ -3,9 +3,8 @@ from http import HTTPStatus
 from rest_framework import generics
 from rest_framework.response import Response
 
-from api.models import Assignment, GameData
-import json
-
+from api.enums.run_status import RunStatus
+from api.models import Assignment, GameData, Run
 from api.serializers import AssignmentSerializer
 
 
@@ -13,24 +12,29 @@ class AssignmentsView(generics.GenericAPIView):
 
     def post(self, request, *args, **kwargs):
         req = request.data
-        assignment = Assignment(name=req['assignmentName'], course_id=req['courseId'], game_id=req['gameId'], rounds=0)
+        assignment = Assignment(name=req['assignmentName'], course_id=req['courseId'], game_id=req['gameId'],
+                                attempts=req['attempts'])
+
         assignment.save()
 
         game_data_list = []
         for question in req['questions']:
-            answers = json.dumps(question['answers'])
-            game_data = GameData(question=question['question'], answers=answers, order=question['order'],
+            game_data = GameData(question=question['question'], answers=question['answers'], order=question['order'],
                                  right_answer=question['answer'], assignment=assignment)
             game_data_list.append(game_data)
 
         GameData.objects.bulk_create(game_data_list)
-        return Response(HTTPStatus.OK)
+        return Response({'data': {'id': assignment.id, 'name': assignment.name, 'gameId': assignment.game_id}})
 
     def get(self, request, *args, **kwargs):
-        # user_id = request.GET.get('userId', None)
         context_id = request.GET.get('assignmentId', None)
-        # user = LTIUser.objects.get(lti_user_id=user_id)
         assignments = AssignmentSerializer(Assignment.objects.filter(course_id=context_id), many=True)
+
+        for assignment in assignments.data:
+            run_query_set = Run.objects.filter(assignment_id=assignment['id'], user_id=request.GET.get('userId'),
+                                               state=RunStatus.IN_PROGRESS.value)
+            if run_query_set.exists():
+                assignment['inProgress'] = True
 
         return Response({'data': assignments.data})
 
