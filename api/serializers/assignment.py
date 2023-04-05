@@ -8,4 +8,4 @@ class AssignmentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Assignment
-        fields = '__all__'
+        fields = ('id', 'name', 'gameId')

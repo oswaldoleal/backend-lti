@@ -5,10 +5,7 @@ from api.models import Assignment
 
 class GameData(models.Model):
 
-    question = models.TextField()
-    answers = models.JSONField()
-    order = models.PositiveIntegerField()
-    right_answer = models.PositiveIntegerField()
+    info = models.JSONField()
     assignment = models.ForeignKey(
         to=Assignment,
         related_name='related_assignment',

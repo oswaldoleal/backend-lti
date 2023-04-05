@@ -15,7 +15,7 @@ class RunView(generics.GenericAPIView):
     def get_objects(self, assignment_id):
         try:
             return GameData.objects.filter(assignment_id=assignment_id).order_by(
-                "order"
+                'info__order'
             )
         except GameData.DoesNotExist:
             raise Http404
@@ -23,7 +23,7 @@ class RunView(generics.GenericAPIView):
     def post(self, request, *args, **kwargs):
         req = request.data
 
-        if req['gameId'] == Game.QUIZ.value:
+        if req['gameId'] in [Game.QUIZ.value, Game.HANGMAN.value]:
             final_data = self.get_game_data(req)
 
         return Response(final_data)
@@ -47,17 +47,7 @@ class RunView(generics.GenericAPIView):
 
             run.save()
         else:
-            run = latest_user_run
-            latest_run_order = run.user_input.get('last_order')
-
-            if order > latest_run_order:
-                run.user_input['last_order'] = order
-                run.user_input['answers'][order - 1] = req['answerIndex']
-                run.save()
-            elif order < latest_run_order:
-                order = latest_run_order
-            for answer in run.user_input['answers']:
-                answers.append(run.user_input['answers'][answer])
+            run, order, answers = self.run_is_not_new(req, latest_user_run, order, answers)
 
         run = RunSerializer(run).data
         data = self.get_objects(req['assignmentId'])
@@ -75,3 +65,20 @@ class RunView(generics.GenericAPIView):
         }
 
         return final_data
+
+    def run_is_not_new(self, req, run, order, answers):
+        latest_run_order = run.user_input.get('last_order')
+
+        if order > latest_run_order:
+            run.user_input['last_order'] = order
+            if req['gameId'] == Game.QUIZ.value:
+                run.user_input['answers'][order - 1] = req['answerIndex']
+            elif req['gameId'] == Game.HANGMAN.value:
+                run.user_input['answers'][order - 1] = req['hasWon']
+            run.save()
+        elif order < latest_run_order:
+            order = latest_run_order
+        for answer in run.user_input['answers']:
+            answers.append(run.user_input['answers'][answer])
+
+        return run, order, answers

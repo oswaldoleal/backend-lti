@@ -11,28 +11,31 @@ class ScoreView(generics.GenericAPIView):
 
     def post(self, request):
         req = request.data
-        game_data = self.queryset.filter(assignment_id=req["assignmentId"]).order_by("order")
+        game_data = self.queryset.filter(assignment_id=req['assignmentId']).order_by('info__order')
 
-        if req['gameId'] == Game.QUIZ.value:
-            return self.set_quiz_score(req, game_data)
+        if req['gameId'] in [Game.QUIZ.value, Game.HANGMAN.value]:
+            return self.set_score(req, game_data)
 
-    def set_quiz_score(self, req, game_data):
+    def set_score(self, req, game_data):
         score = 0
         latest_user_run = Run.objects.filter(user_id=req['userId'],
                                              assignment_id=req['assignmentId'], state=RunStatus.IN_PROGRESS.value) \
             .order_by('id').last()
 
         for i in range(0, len(game_data)):
-            if latest_user_run.user_input["answers"][str(i)] == game_data[i].right_answer:
+            answer = latest_user_run.user_input['answers'][str(i)]
+            if req['gameId'] == Game.QUIZ.value and answer == game_data[i].info['right_answer']:
+                score = score + 1
+            elif req['gameId'] == Game.HANGMAN.value and answer:
                 score = score + 1
 
         latest_user_run.score = score
         latest_user_run.state = RunStatus.FINISHED.value
         latest_user_run.save()
 
-        return Response({"score": score})
+        return Response({'score': score})
 
-    #TODO: INTEGRATE LTI SCORE
+    # TODO: INTEGRATE LTI SCORE
     """def postsa(self, request):
         req = request.data
         tool_conf = DjangoDbToolConf()
