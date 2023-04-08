@@ -28,6 +28,11 @@ class Assignment(models.Model):
         related_name='game',
         on_delete=models.CASCADE)
 
+    required_assignment = models.ForeignKey('self',
+                                            related_name='needed_assignment',
+                                            null=True,
+                                            on_delete=models.CASCADE)
+
     attempts = models.PositiveSmallIntegerField(
         default=3,
         help_text="Number of attempts a student has for the assignment"

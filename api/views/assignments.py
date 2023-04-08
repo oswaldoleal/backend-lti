@@ -1,11 +1,11 @@
 from http import HTTPStatus
 
+from django.db import connection
 from rest_framework import generics
 from rest_framework.response import Response
 
 from api.enums.game import Game
-from api.enums.run_status import RunStatus
-from api.models import Assignment, GameData, Run
+from api.models import Assignment, GameData
 from api.serializers import AssignmentSerializer
 
 
@@ -21,7 +21,7 @@ class AssignmentsView(generics.GenericAPIView):
 
     def save_game(self, req):
         assignment = Assignment(name=req['assignmentName'], course_id=req['courseId'], game_id=req['gameId'],
-                                attempts=req['attempts'])
+                                attempts=req['attempts'], required_assignment_id=req.get('requiredAssignmentId'))
 
         assignment.save()
         game_data_list = []
@@ -44,17 +44,45 @@ class AssignmentsView(generics.GenericAPIView):
                     'clue': question['clue'], 'order': question['order']}
 
     def get(self, request, *args, **kwargs):
-        context_id = request.GET.get('assignmentId', None)
+        context_id = request.GET.get('courseId')
         assignments = AssignmentSerializer(Assignment.objects.filter(course_id=context_id), many=True)
 
-        for assignment in assignments.data:
-            run_query_set = Run.objects.filter(assignment_id=assignment['id'], user_id=request.GET.get('userId'),
-                                               state=RunStatus.IN_PROGRESS.value)
-            if run_query_set.exists():
-                assignment['inProgress'] = True
+        if request.GET.get('isStudent') == 'True':
+            assignment_counters = self.get_runs_by_assignment([assignment['id'] for assignment in assignments.data],
+                                                              context_id, request.GET.get('userId'))
+
+            self.process_student_assignments(assignments, assignment_counters)
 
         return Response({'data': assignments.data})
+
+
+    def process_student_assignments(self, assignments, assignment_counters):
+        for assignment in assignments.data:
+            for assignment_counter in assignment_counters:
+                if assignment_counter[0] == assignment['id']:
+                    if assignment_counter[1]:
+                        assignment['inProgress'] = True
+                    assignment['attemptsLeft'] = assignment['attempts'] - assignment_counter[2]
+
+                if assignment_counter[0] == assignment.get('requiredAssignment') and assignment_counter[2] > 0:
+                    assignment['requiredAssignmentSatisfied'] = True
+                    break
 
     def delete(self, request, *args, **kwargs):
         Assignment.objects.filter(id=request.data['id']).delete()
         return Response(HTTPStatus.OK)
+
+    def get_runs_by_assignment(self, ids, course_id, user_id) -> list[tuple[int, int, bool]]:
+        """
+        Return the list of tuples made of the assignment ids,
+        if the assignment has any run in progress associated to the student, and the amount of finished runs
+        """
+        with connection.cursor() as cursor:
+            cursor.execute("""
+            SELECT a.id, bool_or(case when ar.state = 1 then true else false end), 
+            sum(case when ar.state = 2 then 1 else 0 end)
+            FROM lti_app.api_assignment a join lti_app.api_run ar
+            on a.id = ar.assignment_id
+            WHERE a.id = ANY(%s) AND a.course_id = %s AND ar.user_id = %s::uuid 
+            GROUP BY a.id""", [ids, course_id, user_id])
+            return cursor.fetchall()
