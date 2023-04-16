@@ -6,6 +6,7 @@ class Course(models.Model):
     id = models.CharField(
         primary_key=True,
         auto_created=True,
+        max_length=512,
         help_text='LTI Course ID',
     )
 
@@ -22,5 +23,6 @@ class Course(models.Model):
     )
 
     deployment_id = models.CharField(
+        max_length=512,
         help_text='Relation to corresponding deployment on an LTI Platform',
     )

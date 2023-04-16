@@ -22,11 +22,7 @@ class CanvasAuth(authentication.BaseAuthentication):
         user_id = message_launch_data['sub']
         user_roles = message_launch_data['https://purl.imsglobal.org/spec/lti/claim/roles']
 
-        #TODO: TEST STUDENT HAS NO EMAIL, SO WE SHOULD NOT BE DOING THIS IN PROD
-        if message_launch_data['name'] != 'Test Student':
-            email = message_launch_data['email']
-        else:
-            email = ''
+        email = message_launch_data.get('email', None)
 
         user = LTIUser.objects.filter(lti_user_id=user_id)
         if len(user) == 0:

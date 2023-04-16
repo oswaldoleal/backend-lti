@@ -1,11 +1,12 @@
 from http import HTTPStatus
 
 from django.db import connection
+from django.db.models import Case, When, Value, BooleanField, IntegerField, Sum
 from rest_framework import generics
 from rest_framework.response import Response
 
 from api.enums.game import Game
-from api.models import Assignment, GameData
+from api.models import Assignment, GameData, Run
 from api.serializers import AssignmentSerializer
 
 
@@ -59,14 +60,16 @@ class AssignmentsView(generics.GenericAPIView):
     def process_student_assignments(self, assignments, assignment_counters):
         for assignment in assignments.data:
             for assignment_counter in assignment_counters:
-                if assignment_counter[0] == assignment['id']:
-                    if assignment_counter[1]:
+                print(assignment['id'], assignment_counter['assignment'])
+                if assignment_counter['assignment'] == assignment['id']:
+                    if assignment_counter['in_progress']:
                         assignment['inProgress'] = True
-                    assignment['attemptsLeft'] = assignment['attempts'] - assignment_counter[2]
+                    assignment['attemptsLeft'] = assignment['attempts'] - assignment_counter['finished_runs']
+                    print(assignment['attemptsLeft'], assignment_counter)
 
-                if assignment_counter[0] == assignment.get('requiredAssignment') and assignment_counter[2] > 0:
+                if assignment_counter['assignment'] == assignment.get('requiredAssignment') and assignment_counter['finished_runs'] > 0:
                     assignment['requiredAssignmentSatisfied'] = True
-                    break
+                    continue
 
     def delete(self, request, *args, **kwargs):
         Assignment.objects.filter(id=request.data['id']).delete()
@@ -77,12 +80,24 @@ class AssignmentsView(generics.GenericAPIView):
         Return the list of tuples made of the assignment ids,
         if the assignment has any run in progress associated to the student, and the amount of finished runs
         """
-        with connection.cursor() as cursor:
-            cursor.execute("""
-            SELECT a.id, bool_or(case when ar.state = 1 then true else false end), 
-            sum(case when ar.state = 2 then 1 else 0 end)
-            FROM lti_app.api_assignment a join lti_app.api_run ar
-            on a.id = ar.assignment_id
-            WHERE a.id = ANY(%s) AND a.course_id = %s AND ar.user_id = %s::uuid 
-            GROUP BY a.id""", [ids, course_id, user_id])
-            return cursor.fetchall()
+        qs = Run.objects.filter(
+            assignment__in=ids,
+            user=user_id,
+            assignment__course=course_id
+        ).annotate(in_progress=Case(
+                When(state=1,
+                        then=Value(True)),
+                default=Value(False),
+                output_field=BooleanField()
+            ),
+            finished=Case(
+                When(state=2,
+                        then=Value(1)),
+                default=Value(0),
+                output_field=IntegerField()
+            ),
+        ).values('assignment', 'in_progress', 'finished').annotate(
+            finished_runs=Sum('finished')
+        )
+
+        return qs

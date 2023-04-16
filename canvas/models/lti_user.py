@@ -30,7 +30,7 @@ class LTIUser(models.Model):
     )
 
     email = models.EmailField(
-        unique=True,
+        null=True,
         help_text='User email in the LTI platform',
     )
 
