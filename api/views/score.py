@@ -15,8 +15,6 @@ class ScoreView(generics.GenericAPIView):
 
         if req['gameId'] in [Game.QUIZ.value, Game.HANGMAN.value]:
             return self.set_score(req, game_data)
-        elif req['gameId'] == Game.MEMORY.value:
-            return self.set_memory_score(req)
 
     def set_score(self, req, game_data):
         score = 0
@@ -30,19 +28,6 @@ class ScoreView(generics.GenericAPIView):
                 score = score + 1
             elif req['gameId'] == Game.HANGMAN.value and answer:
                 score = score + 1
-
-        latest_user_run.score = score
-        latest_user_run.state = RunStatus.FINISHED.value
-        latest_user_run.save()
-
-        return Response({'score': score})
-
-    def set_memory_score(self, req):
-        latest_user_run = Run.objects.filter(user_id=req['userId'],
-                                             assignment_id=req['assignmentId'], state=RunStatus.IN_PROGRESS.value) \
-            .order_by('id').last()
-
-        score = 100 - req['failedAttempts'] * req['totalMatches']
 
         latest_user_run.score = score
         latest_user_run.state = RunStatus.FINISHED.value

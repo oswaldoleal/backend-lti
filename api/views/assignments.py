@@ -15,7 +15,7 @@ class AssignmentsView(generics.GenericAPIView):
     def post(self, request, *args, **kwargs):
         req = request.data
 
-        if req['gameId'] in [Game.QUIZ.value, Game.HANGMAN.value, Game.MEMORY.value]:
+        if req['gameId'] in [Game.QUIZ.value, Game.HANGMAN.value]:
             response = self.save_game(req)
 
         return response
@@ -27,33 +27,22 @@ class AssignmentsView(generics.GenericAPIView):
         assignment.save()
         game_data_list = []
 
-        if req['gameId'] in [Game.QUIZ.value, Game.HANGMAN.value]:
-            for question in req['questions']:
-                game_data = GameData(info=self.get_info(question, req['gameId']),
-                                     assignment=assignment)
-                game_data_list.append(game_data)
-        elif req['gameId'] in [Game.MEMORY.value]:
-            game_data = GameData(info=self.get_info(req['questions'], req['gameId']),
+        for question in req['questions']:
+            game_data = GameData(info=self.get_info(question, req['gameId']),
                                  assignment=assignment)
             game_data_list.append(game_data)
 
         GameData.objects.bulk_create(game_data_list)
         return Response({'data': {'id': assignment.id, 'name': assignment.name, 'gameId': assignment.game_id}})
 
-    def get_info(self, data, game_id):
+    def get_info(self, question, game_id):
         if game_id == Game.QUIZ.value:
-            return {'question': data['question'],
-                    'right_answer': data['answer'],
-                    'options': data['options'], 'order': data['order']}
+            return {'question': question['question'],
+                    'right_answer': question['answer'],
+                    'options': question['options'], 'order': question['order']}
         elif game_id == Game.HANGMAN.value:
-            return {'word_to_guess': data['wordToGuess'],
-                    'clue': data['clue'], 'order': data['order']}
-        elif game_id == Game.MEMORY.value:
-            cards = []
-            for info in data:
-                cards.append({'id': info['id'], 'match': info['firstMatch']})
-                cards.append({'id': info['id'], 'match': info['secondMatch']})
-            return {'cards': cards}
+            return {'word_to_guess': question['wordToGuess'],
+                    'clue': question['clue'], 'order': question['order']}
 
     def get(self, request, *args, **kwargs):
         context_id = request.GET.get('courseId')
