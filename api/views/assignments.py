@@ -60,12 +60,10 @@ class AssignmentsView(generics.GenericAPIView):
     def process_student_assignments(self, assignments, assignment_counters):
         for assignment in assignments.data:
             for assignment_counter in assignment_counters:
-                print(assignment['id'], assignment_counter['assignment'])
                 if assignment_counter['assignment'] == assignment['id']:
                     if assignment_counter['in_progress']:
                         assignment['inProgress'] = True
                     assignment['attemptsLeft'] = assignment['attempts'] - assignment_counter['finished_runs']
-                    print(assignment['attemptsLeft'], assignment_counter)
 
                 if assignment_counter['assignment'] == assignment.get('requiredAssignment') and assignment_counter['finished_runs'] > 0:
                     assignment['requiredAssignmentSatisfied'] = True

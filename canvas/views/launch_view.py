@@ -44,9 +44,12 @@ class LaunchView(APIView):
             'user_id': request.user.lti_user_id,
             'is_student': request.user.is_student(),
             'is_instructor': request.user.is_instructor(),
-            'launch_id': message_launch.get_launch_id()
+            'launch_id': message_launch.get_launch_id(),
+            'session_id': request.COOKIES.get('lti1p3-session-id'),
         }
         params.update(self.get_context_from_launch_data(request.launch_data))
 
         redirect_url = 'https://localhost:3000/redirect' + self.url_params_to_str(params)
-        return redirect(redirect_url)
+        response_redirect = redirect(redirect_url)
+
+        return response_redirect

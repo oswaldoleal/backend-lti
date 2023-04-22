@@ -5,11 +5,30 @@ from api.enums.game import Game
 from api.enums.run_status import RunStatus
 from api.models import GameData, Run
 
+from pylti1p3.contrib.django import (
+    DjangoCacheDataStorage,
+    DjangoDbToolConf,
+    DjangoMessageLaunch,
+)
 
 class ScoreView(generics.GenericAPIView):
     queryset = GameData.objects
 
     def post(self, request):
+        print(request.COOKIES, request.headers)
+        request.COOKIES['lti1p3-session-id'] = request.data['sessionId']
+        print(request.COOKIES, request.headers)
+
+        # tool_conf = DjangoDbToolConf()
+        # launch_data_storage = DjangoCacheDataStorage()
+        # message_launch = DjangoMessageLaunch(
+        #     request, tool_conf, launch_data_storage=launch_data_storage
+        # )
+        # ags = message_launch.get_ags()
+        # print(ags)
+        message_launch = DjangoMessageLaunch.from_cache()
+
+
         req = request.data
         game_data = self.queryset.filter(assignment_id=req['assignmentId']).order_by('info__order')
 
