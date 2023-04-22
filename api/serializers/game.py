@@ -4,7 +4,8 @@ from api.models.game import Game
 
 
 class GameSerializer(serializers.ModelSerializer):
+    svgRoute = serializers.CharField(source='svg_route')
 
     class Meta:
         model = Game
-        fields = '__all__'
+        fields = ('id', 'name', 'description', 'instructions', 'svgRoute')

@@ -25,8 +25,41 @@ class RunView(generics.GenericAPIView):
 
         if req['gameId'] in [Game.QUIZ.value, Game.HANGMAN.value]:
             final_data = self.get_game_data(req)
+        elif req['gameId'] == Game.MEMORY.value:
+            final_data = self.get_memory_game_data(req)
 
         return Response(final_data)
+
+    def get_memory_game_data(self, req):
+        start_date = datetime.now(timezone.utc)
+        latest_user_run = Run.objects.filter(user_id=req['userId'],
+                                             assignment_id=req['assignmentId'], state=RunStatus.IN_PROGRESS.value) \
+            .order_by('id').last()
+
+        if latest_user_run is None:
+            run = Run(
+                start_date=start_date,
+                end_date=start_date + timedelta(minutes=30),
+                score=0, state=RunStatus.IN_PROGRESS.value, assignment_id=req['assignmentId'],
+                user_id=req['userId'], user_input={'last_order': 0, "answers": {}}
+            )
+
+            run.save()
+            latest_user_run = run
+
+        run = RunSerializer(latest_user_run).data
+        data = self.get_objects(req['assignmentId'])
+
+        game_data = GameDataSerializer(data[0]).data
+
+        final_data = {
+            "game_data": game_data,
+            "run": run,
+            "totalCards": len(game_data['info']),
+            "cards": game_data['info'],
+        }
+
+        return final_data
 
     def get_game_data(self, req):
         start_date = datetime.now(timezone.utc)
