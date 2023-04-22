@@ -1,32 +1,32 @@
 [
-  {
+{
     "model": "api.game",
     "pk": 1,
     "fields": {
-      "name": "quiz",
-      "description": "Answer correctly in order to win",
-      "instructions": "Choose the right answer between four options.",
-      "image_url": "/svg/quiz.svg"
+        "name": "quiz",
+        "description": "Answer correctly in order to win",
+        "instructions": "Choose the right answer between four options.",
+        "svg_route": "/svg/quiz.svg"
     }
-  },
-  {
+},
+{
     "model": "api.game",
     "pk": 2,
     "fields": {
-      "name": "hangman",
-      "description": "Defeat oswaldo drinking vodka",
-      "instructions": "Don't Lose.",
-      "image_url": "/svg/hang.svg"
+        "name": "hangman",
+        "description": "Defeat oswaldo drinking vodka",
+        "instructions": "Don't Lose.",
+        "svg_route": "/svg/hang.svg"
     }
-  },
-  {
+},
+{
     "model": "api.game",
     "pk": 3,
     "fields": {
-      "name": "memory",
-      "description": "Placeholder",
-      "instructions": "Placeholder",
-      "image_url": "/svg/memory.svg"
+        "name": "memory",
+        "description": "Placeholder",
+        "instructions": "Placeholder",
+        "svg_route": "/svg/memory.svg"
     }
-  }
+}
 ]
