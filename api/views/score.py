@@ -1,9 +1,11 @@
+import math
+
 from rest_framework import generics
 from rest_framework.response import Response
 
 from api.enums.game import Game
 from api.enums.run_status import RunStatus
-from api.models import GameData, Run
+from api.models import GameData, Run, Assignment, Question
 
 
 class ScoreView(generics.GenericAPIView):
@@ -11,12 +13,39 @@ class ScoreView(generics.GenericAPIView):
 
     def post(self, request):
         req = request.data
-        game_data = self.queryset.filter(assignment_id=req['assignmentId']).order_by('info__order')
 
         if req['gameId'] in [Game.QUIZ.value, Game.HANGMAN.value]:
+            game_data = self.queryset.filter(assignment_id=req['assignmentId']).order_by('info__order')
             return self.set_score(req, game_data)
         elif req['gameId'] == Game.MEMORY.value:
             return self.set_memory_score(req)
+        elif req['gameId'] == Game.SNAKE.value:
+            return self.set_snake_score(req)
+
+    def set_snake_score(self, req):
+        correct_questions = 0
+        assignment = Assignment.objects.get(id=req['assignmentId'])
+        questions = Question.objects.filter(question_bank_id=assignment.question_bank_id)
+        latest_user_run = Run.objects.filter(user_id=req['userId'],
+                                             assignment_id=req['assignmentId'], state=RunStatus.IN_PROGRESS.value) \
+            .order_by('id').last()
+
+        answers = latest_user_run.user_input['answers']
+
+        for question in questions:
+            if str(question.id) in latest_user_run.user_input['answers'] and question.info['right_answer'] == answers[str(question.id)]:
+                correct_questions += 1
+
+        if len(answers) > 0:
+            score = (correct_questions * 100) / len(latest_user_run.user_input['answers'])
+        else:
+            score = 100
+
+        latest_user_run.score = math.trunc(score)
+        latest_user_run.state = RunStatus.FINISHED.value
+        latest_user_run.save()
+
+        return Response({'score': latest_user_run.score})
 
     def set_score(self, req, game_data):
         score = 0

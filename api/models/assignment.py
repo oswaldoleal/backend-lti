@@ -1,4 +1,5 @@
 from api.models.game import Game
+from api.models.question_bank import QuestionBank
 from canvas.models import Course
 from django.db import models
 
@@ -36,4 +37,12 @@ class Assignment(models.Model):
     attempts = models.PositiveSmallIntegerField(
         default=3,
         help_text="Number of attempts a student has for the assignment"
+    )
+
+    question_bank = models.ForeignKey(
+        to=QuestionBank,
+        null=True,
+        related_name='related_bank',
+        on_delete=models.CASCADE,
+        help_text='Relation to corresponding bank',
     )

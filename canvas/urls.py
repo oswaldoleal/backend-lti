@@ -1,8 +1,8 @@
 from canvas import views
-from django.urls import re_path
-
+from django.urls import re_path, path
 
 urlpatterns = [
     re_path(r"^login/$", views.LoginView.as_view(), name="login"),
     re_path(r"^launch/$", views.LaunchView.as_view(), name="launch"),
+    path('avatar', views.AvatarView.as_view(), name="avatar"),
 ]

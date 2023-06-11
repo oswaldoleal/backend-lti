@@ -1,6 +1,5 @@
 from http import HTTPStatus
 
-from django.db import connection
 from django.db.models import Case, When, Value, BooleanField, IntegerField, Sum
 from rest_framework import generics
 from rest_framework.response import Response
@@ -17,8 +16,22 @@ class AssignmentsView(generics.GenericAPIView):
 
         if req['gameId'] in [Game.QUIZ.value, Game.HANGMAN.value, Game.MEMORY.value]:
             response = self.save_game(req)
+        elif req['gameId'] == Game.SNAKE.value:
+            response = self.save_snake_game(req)
 
         return response
+
+    def save_snake_game(self, req):
+        assignment = Assignment(name=req['assignmentName'], course_id=req['courseId'], game_id=req['gameId'],
+                                attempts=req['attempts'], required_assignment_id=req.get('requiredAssignmentId'),
+                                question_bank_id=req['questionBankId'])
+
+        assignment.save()
+
+        game_data = GameData(info=self.get_info(req, req['gameId']), assignment=assignment)
+        game_data.save()
+
+        return Response({'data': {'id': assignment.id, 'name': assignment.name, 'gameId': assignment.game_id}})
 
     def save_game(self, req):
         assignment = Assignment(name=req['assignmentName'], course_id=req['courseId'], game_id=req['gameId'],
@@ -54,6 +67,8 @@ class AssignmentsView(generics.GenericAPIView):
                 cards.append({'id': info['id'], 'match': info['firstMatch']})
                 cards.append({'id': info['id'], 'match': info['secondMatch']})
             return {'cards': cards}
+        elif game_id == Game.SNAKE.value:
+            return {'board': data['board'], 'rolls_to_show_question': int(data['rollsToShowQuestion'])}
 
     def get(self, request, *args, **kwargs):
         context_id = request.GET.get('courseId')
@@ -67,7 +82,6 @@ class AssignmentsView(generics.GenericAPIView):
 
         return Response({'data': assignments.data})
 
-
     def process_student_assignments(self, assignments, assignment_counters):
         for assignment in assignments.data:
             for assignment_counter in assignment_counters:
@@ -78,7 +92,8 @@ class AssignmentsView(generics.GenericAPIView):
                     assignment['attemptsLeft'] = assignment['attempts'] - assignment_counter['finished_runs']
                     print(assignment['attemptsLeft'], assignment_counter)
 
-                if assignment_counter['assignment'] == assignment.get('requiredAssignment') and assignment_counter['finished_runs'] > 0:
+                if assignment_counter['assignment'] == assignment.get('requiredAssignment') and assignment_counter[
+                    'finished_runs'] > 0:
                     assignment['requiredAssignmentSatisfied'] = True
                     continue
 
@@ -96,14 +111,14 @@ class AssignmentsView(generics.GenericAPIView):
             user=user_id,
             assignment__course=course_id
         ).annotate(in_progress=Case(
-                When(state=1,
-                        then=Value(True)),
-                default=Value(False),
-                output_field=BooleanField()
-            ),
+            When(state=1,
+                 then=Value(True)),
+            default=Value(False),
+            output_field=BooleanField()
+        ),
             finished=Case(
                 When(state=2,
-                        then=Value(1)),
+                     then=Value(1)),
                 default=Value(0),
                 output_field=IntegerField()
             ),
