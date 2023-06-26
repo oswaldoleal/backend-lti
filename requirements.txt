@@ -7,3 +7,4 @@ PyLTI1p3==2.0.0
 django-cors-headers==3.13.0
 psycopg[binary]
 django[argon2]
+imagekitio
