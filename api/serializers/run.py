@@ -1,7 +1,6 @@
+from api.models import Run
 from rest_framework import serializers
 from datetime import datetime, timezone
-
-from api.models import Run
 
 
 class RunSerializer(serializers.ModelSerializer):
@@ -21,4 +20,11 @@ class RunSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Run
-        fields = ('start_date', 'end_date', 'id', 'user_input', 'minutes', 'seconds')
+        fields = [
+            'start_date',
+            'end_date',
+            'id',
+            'user_input',
+            'minutes',
+            'seconds',
+        ]

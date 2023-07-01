@@ -1,3 +1,5 @@
+import json
+
 from api.models import User
 from backend.settings import REDIRECT_URI, TARGET_URI, OPENID_URL, PUBLIC_JWK
 from django.http import HttpResponse
@@ -5,8 +7,6 @@ from http import HTTPStatus
 from pylti1p3.contrib.django.lti1p3_tool_config.models import LtiTool
 from rest_framework import generics
 from rest_framework.response import Response
-
-import json
 
 
 class UserConfigView(generics.GenericAPIView):

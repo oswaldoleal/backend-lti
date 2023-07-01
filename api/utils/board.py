@@ -1,4 +1,4 @@
-from api.enums.direction import Direction
+from .enums.direction import Direction
 
 BOARDS = [{'tiles_per_row': 10, 'rem_per_tile': 3, 'tiles_per_column': 10,
            'path': '/static/boards/colorful-snake.png',

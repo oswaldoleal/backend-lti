@@ -1,6 +1,5 @@
-from django.db import models
-
 from canvas.models import LTIUser
+from django.db import models
 
 
 class QuestionBank(models.Model):

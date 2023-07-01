@@ -1,6 +1,5 @@
+from api.models import QuestionBank
 from django.db import models
-
-from api.models.question_bank import QuestionBank
 
 
 class Question(models.Model):

@@ -1,6 +1,5 @@
-from http import HTTPStatus
-
 from django.http import Http404, HttpResponse
+from http import HTTPStatus
 from rest_framework import generics
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
@@ -14,10 +13,9 @@ class AvatarView(generics.GenericAPIView):
     def get(self, request):
         try:
             avatar_config = get_object_or_404(AvatarConfig, user_id=request.GET.get('userId'))
+            return Response({'data': AvatarSerializer(avatar_config).data})
         except Http404:
             return Response({'data': None})
-
-        return Response({'data': AvatarSerializer(avatar_config).data})
 
     def post(self, request, *args, **kwargs):
         try:

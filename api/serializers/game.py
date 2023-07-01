@@ -1,6 +1,5 @@
+from api.models import Game
 from rest_framework import serializers
-
-from api.models.game import Game
 
 
 class GameSerializer(serializers.ModelSerializer):
@@ -8,4 +7,10 @@ class GameSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Game
-        fields = ('id', 'name', 'description', 'instructions', 'svgRoute')
+        fields = [
+            'id',
+            'name',
+            'description',
+            'instructions',
+            'svgRoute',
+        ]

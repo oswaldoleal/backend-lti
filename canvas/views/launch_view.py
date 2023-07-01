@@ -5,7 +5,7 @@ from django.shortcuts import redirect
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
-from canvas.views.requests_cache import RequestCache
+from canvas.utils import RequestCache
 
 
 class LaunchView(APIView):
@@ -37,14 +37,14 @@ class LaunchView(APIView):
         return context
 
     def post(self, request, *args, **kwargs):
-        # TODO: pass the role and context to the frontend
         tool_conf = DjangoDbToolConf()
         launch_data_storage = DjangoCacheDataStorage()
-        message_launch = DjangoMessageLaunch(request, tool_conf,
-                                             launch_data_storage=launch_data_storage)
+        message_launch = DjangoMessageLaunch(
+            request,
+            tool_conf,
+            launch_data_storage=launch_data_storage
+        )
 
-
-        ##message_launch.get_launch_data().get('https://purl.imsglobal.org/spec/lti/claim/resource_link', {}).get('id')
         RequestCache.add_request(request=request, launch_id=message_launch.get_launch_id())
 
         params = {

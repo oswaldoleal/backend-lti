@@ -1,6 +1,5 @@
-from rest_framework import serializers
-
 from api.models import Assignment
+from rest_framework import serializers
 
 
 class AssignmentSerializer(serializers.ModelSerializer):
@@ -9,4 +8,10 @@ class AssignmentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Assignment
-        fields = ('id', 'name', 'gameId', 'requiredAssignment', 'attempts')
+        fields = [
+            'id',
+            'name',
+            'gameId',
+            'requiredAssignment',
+            'attempts',
+        ]

@@ -1,17 +1,28 @@
 from datetime import timedelta, datetime, timezone
+from typing import Any
 
 from django.http import Http404
 from rest_framework import generics
 from rest_framework.response import Response
 
-from api.boards import BOARDS
-from api.enums.game import Game
-from api.enums.run_status import RunStatus
+from api.utils import BOARDS
+from api.utils.enums.game import Game
+from api.utils.enums.run_status import RunStatus
 from api.models import GameData, Run
 from api.serializers import RunSerializer, GameDataSerializer
 
 
 class RunView(generics.GenericAPIView):
+
+    def __init__(self, **kwargs: Any) -> None:
+        super().__init__(**kwargs)
+
+        self.GET_GAME_DATA_METHODS = {
+            Game.QUIZ: self.get_game_data,
+            Game.HANGMAN: self.get_game_data,
+            Game.MEMORY: self.get_memory_game_data,
+            Game.SNAKE: self.get_snake_game_data,
+        }
 
     def get_objects(self, assignment_id):
         try:
@@ -22,45 +33,25 @@ class RunView(generics.GenericAPIView):
             raise Http404
 
     def post(self, request, *args, **kwargs):
-        req = request.data
+        game = Game(request.data['gameId'])
+        return Response(self.GET_GAME_DATA_METHODS[game](request.data))
 
-        if req['gameId'] in [Game.QUIZ.value, Game.HANGMAN.value]:
-            final_data = self.get_game_data(req)
-        elif req['gameId'] == Game.MEMORY.value:
-            final_data = self.get_memory_game_data(req)
-        elif req['gameId'] == Game.SNAKE.value:
-            final_data = self.get_snake_game_data(req)
-
-        return Response(final_data)
-
-    def get_snake_game_data(self, req):
+    def get_snake_game_data(self, data):
         start_date = datetime.now(timezone.utc)
-        latest_user_run = Run.objects.filter(user_id=req['userId'],
-                                             assignment_id=req['assignmentId'], state=RunStatus.IN_PROGRESS.value) \
-            .order_by('id').last()
+        latest_user_run = Run.objects.filter(
+            user_id=data['userId'],
+            assignment_id=data['assignmentId'],
+            state=RunStatus.IN_PROGRESS.value
+        ).order_by('id').last()
 
-        data = GameData.objects.filter(assignment_id=req['assignmentId'])
+        game_data = GameData.objects.filter(assignment_id=data['assignmentId'])
 
-        game_data = GameDataSerializer(data[0]).data
+        game_data = GameDataSerializer(game_data[0]).data
         board = BOARDS[game_data['info']['board']]
-        answer = req.get('answer')
-        user_position = req.get('userPosition')
+        answer = data.get('answer')
+        user_position = data.get('userPosition')
 
-        if latest_user_run is None:
-            run = Run(
-                start_date=start_date,
-                end_date=start_date + timedelta(minutes=30),
-                score=0, state=RunStatus.IN_PROGRESS.value, assignment_id=req['assignmentId'],
-                user_id=req['userId'], user_input={"answers": {}, "position": 1, "direction": 1,
-                                                   "x": 0,
-                                                   "y": board['rem_per_tile'] * board['tiles_per_column'] - 2,
-                                                   "rolls_left": game_data['info']['rolls_to_show_question']}
-            )
-
-            run.save()
-            latest_user_run = run
-
-        elif latest_user_run is not None:
+        if latest_user_run:
             if answer is not None and answer['id'] != -1:
                 latest_user_run.user_input['answers'][answer['id']] = answer['answerIndex']
             elif user_position is not None:
@@ -69,100 +60,119 @@ class RunView(generics.GenericAPIView):
                 latest_user_run.user_input['position'] = user_position['position']
                 latest_user_run.user_input['direction'] = user_position['direction']
                 latest_user_run.user_input['rolls_left'] = user_position['rollsLeft']
+        else:
+            latest_user_run = Run(
+                start_date=start_date,
+                end_date=start_date + timedelta(minutes=30),
+                score=0,
+                state=RunStatus.IN_PROGRESS.value,
+                assignment_id=data['assignmentId'],
+                user_id=data['userId'],
+                user_input={
+                    "answers": {},
+                    "position": 1,
+                    "direction": 1,
+                    "x": 0,
+                    "y": board['rem_per_tile'] * board['tiles_per_column'] - 2,
+                    "rolls_left": game_data['info']['rolls_to_show_question'],
+                },
+            )
+        latest_user_run.save()
+
+        return_data = {
+            "board_data": board,
+            "game_data": game_data,
+            "run": RunSerializer(latest_user_run).data,
+        }
+        return return_data
+
+    def get_memory_game_data(self, data):
+        start_date = datetime.now(timezone.utc)
+        latest_user_run = Run.objects.filter(
+            user_id=data['userId'],
+            assignment_id=data['assignmentId'],
+            state=RunStatus.IN_PROGRESS.value
+        ).order_by('id').last()
+
+        if latest_user_run is None:
+            latest_user_run = Run(
+                start_date=start_date,
+                end_date=start_date + timedelta(minutes=30),
+                score=0,
+                state=RunStatus.IN_PROGRESS.value,
+                assignment_id=data['assignmentId'],
+                user_id=data['userId'],
+                user_input={'last_order': 0, "answers": {}}
+            )
 
             latest_user_run.save()
 
-        run = RunSerializer(latest_user_run).data
-
-        final_data = {
-            "board_data": board,
-            "game_data": game_data,
-            "run": run,
-        }
-
-        return final_data
-
-    def get_memory_game_data(self, req):
-        start_date = datetime.now(timezone.utc)
-        latest_user_run = Run.objects.filter(user_id=req['userId'],
-                                             assignment_id=req['assignmentId'], state=RunStatus.IN_PROGRESS.value) \
-            .order_by('id').last()
-
-        if latest_user_run is None:
-            run = Run(
-                start_date=start_date,
-                end_date=start_date + timedelta(minutes=30),
-                score=0, state=RunStatus.IN_PROGRESS.value, assignment_id=req['assignmentId'],
-                user_id=req['userId'], user_input={'last_order': 0, "answers": {}}
-            )
-
-            run.save()
-            latest_user_run = run
-
-        run = RunSerializer(latest_user_run).data
-        data = self.get_objects(req['assignmentId'])
-
-        game_data = GameDataSerializer(data[0]).data
-
+        game_data = GameDataSerializer(self.get_objects(data['assignmentId'])[0]).data
         final_data = {
             "game_data": game_data,
-            "run": run,
+            "run": RunSerializer(latest_user_run).data,
             "totalCards": len(game_data['info']),
             "cards": game_data['info'],
         }
 
         return final_data
 
-    def get_game_data(self, req):
+    def get_game_data(self, data):
         start_date = datetime.now(timezone.utc)
-        latest_user_run = Run.objects.filter(user_id=req['userId'],
-                                             assignment_id=req['assignmentId'], state=RunStatus.IN_PROGRESS.value)\
-            .order_by('id').last()
+        latest_user_run = Run.objects.filter(
+            user_id=data['userId'],
+            assignment_id=data['assignmentId'],
+            state=RunStatus.IN_PROGRESS.value
+        ).order_by('id').last()
 
-        order = req['order']
+        order = data['order']
         answers = []
 
         if latest_user_run is None:
             run = Run(
                 start_date=start_date,
                 end_date=start_date + timedelta(minutes=30),
-                score=0, state=RunStatus.IN_PROGRESS.value, assignment_id=req['assignmentId'],
-                user_id=req['userId'], user_input={'last_order': 0, "answers": {}}
+                score=0,
+                state=RunStatus.IN_PROGRESS.value,
+                assignment_id=data['assignmentId'],
+                user_id=data['userId'],
+                user_input={'last_order': 0, "answers": {}},
             )
 
             run.save()
         else:
-            run, order, answers = self.run_is_not_new(req, latest_user_run, order, answers)
+            run, order, answers = self.run_is_not_new(data, latest_user_run, order, answers)
 
         run = RunSerializer(run).data
-        data = self.get_objects(req['assignmentId'])
+        game_datas = self.get_objects(data['assignmentId'])
 
-        if len(data) == order:
+        if len(game_datas) == order:
             game_data = None
         else:
-            game_data = GameDataSerializer(data[order]).data
+            game_data = GameDataSerializer(game_datas[order]).data
 
         final_data = {
             "game_data": game_data,
             "run": run,
-            "totalQuestions": len(data),
+            "totalQuestions": len(game_datas),
             "answers": answers,
         }
 
         return final_data
 
-    def run_is_not_new(self, req, run, order, answers):
+    def run_is_not_new(self, data, run, order, answers):
         latest_run_order = run.user_input.get('last_order')
 
         if order > latest_run_order:
             run.user_input['last_order'] = order
-            if req['gameId'] == Game.QUIZ.value:
-                run.user_input['answers'][order - 1] = req['answerIndex']
-            elif req['gameId'] == Game.HANGMAN.value:
-                run.user_input['answers'][order - 1] = req['hasWon']
+            if data['gameId'] == Game.QUIZ.value:
+                run.user_input['answers'][order - 1] = data['answerIndex']
+            elif data['gameId'] == Game.HANGMAN.value:
+                run.user_input['answers'][order - 1] = data['hasWon']
             run.save()
         elif order < latest_run_order:
             order = latest_run_order
+
         for answer in run.user_input['answers']:
             answers.append(run.user_input['answers'][answer])
 

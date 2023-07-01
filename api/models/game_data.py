@@ -1,6 +1,5 @@
-from django.db import models
-
 from api.models import Assignment
+from django.db import models
 
 
 class GameData(models.Model):

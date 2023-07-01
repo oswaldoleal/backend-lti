@@ -1,6 +1,5 @@
+from api.models import Question
 from rest_framework import serializers
-
-from api.models.question import Question
 
 
 class QuestionSerializer(serializers.ModelSerializer):
@@ -9,4 +8,8 @@ class QuestionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Question
-        fields = ('id', 'options', 'question')
+        fields = [
+            'id',
+            'options',
+            'question',
+        ]

@@ -6,6 +6,7 @@ urlpatterns = [
     path('games', views.GamesView.as_view(), name='games'),
     path('test', views.TestView.as_view(), name='test'),
     path('login', views.LoginView.as_view(), name='login'),
+    # TODO: 'question' may not be the best name for this path
     path('question', views.QuestionsView.as_view(), name='question'),
     path('question-bank', views.QuestionBankView.as_view(), name='question-bank'),
     path('register', views.RegisterView.as_view(), name='register'),

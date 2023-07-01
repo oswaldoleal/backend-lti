@@ -1,7 +1,6 @@
-from django.db import models
-
 from api.models import Assignment
 from canvas.models import LTIUser
+from django.db import models
 
 
 class Run(models.Model):

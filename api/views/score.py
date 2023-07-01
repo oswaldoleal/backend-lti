@@ -1,6 +1,6 @@
 import math
-from datetime import datetime
 
+from datetime import datetime
 from django.http import HttpResponseForbidden
 from pylti1p3.contrib.django import DjangoDbToolConf, DjangoCacheDataStorage, DjangoMessageLaunch
 from pylti1p3.grade import Grade
@@ -8,10 +8,10 @@ from pylti1p3.lineitem import LineItem
 from rest_framework import generics
 from rest_framework.response import Response
 
-from api.enums.game import Game
-from api.enums.run_status import RunStatus
+from api.utils.enums.game import Game
+from api.utils.enums.run_status import RunStatus
 from api.models import GameData, Run, Assignment, Question
-from canvas.views.requests_cache import RequestCache
+from canvas.utils import RequestCache
 
 from pylti1p3.contrib.django import (
     DjangoCacheDataStorage,
@@ -38,42 +38,35 @@ class ScoreView(generics.GenericAPIView):
     queryset = GameData.objects
 
     def post(self, request):
-        print(request.COOKIES, request.headers)
-        request.COOKIES['lti1p3-session-id'] = request.data['sessionId']
-        print(request.COOKIES, request.headers)
+        data = request.data
 
-        # tool_conf = DjangoDbToolConf()
-        # launch_data_storage = DjangoCacheDataStorage()
-        # message_launch = DjangoMessageLaunch(
-        #     request, tool_conf, launch_data_storage=launch_data_storage
-        # )
-        # ags = message_launch.get_ags()
-        # print(ags)
-        message_launch = DjangoMessageLaunch.from_cache()
+        score = 0
+        if data['gameId'] in [Game.QUIZ.value, Game.HANGMAN.value]:
+            game_data = self.queryset.filter(assignment_id=data['assignmentId']).order_by('info__order')
+            score = self.set_score(data, game_data)
+        if data['gameId'] == Game.MEMORY.value:
+            score = self.set_memory_score(data)
+        if data['gameId'] == Game.SNAKE.value:
+            score = self.set_snake_score(data)
 
+        self.set_lti_grade(request)
+        return Response({'score': score})
 
-        req = request.data
-
-        if req['gameId'] in [Game.QUIZ.value, Game.HANGMAN.value]:
-            game_data = self.queryset.filter(assignment_id=req['assignmentId']).order_by('info__order')
-            return self.set_score(req, game_data)
-        elif req['gameId'] == Game.MEMORY.value:
-            return self.set_memory_score(req)
-        elif req['gameId'] == Game.SNAKE.value:
-            return self.set_snake_score(req)
-
-        #self.set_lti_grade(request)
-
-    def set_snake_score(self, req):
+    # TODO: change this functions to only calculate the scores and delegate the actual score setting 
+    #       to a different function
+    def set_snake_score(self, data):
         right_answers = 0
-        assignment = Assignment.objects.get(id=req['assignmentId'])
+        assignment = Assignment.objects.get(id=data['assignmentId'])
         questions = Question.objects.filter(question_bank_id=assignment.question_bank_id)
-        latest_user_run = Run.objects.filter(user_id=req['userId'],
-                                             assignment_id=req['assignmentId'], state=RunStatus.IN_PROGRESS.value) \
-            .order_by('id').last()
+        latest_user_run = Run.objects.filter(
+            user_id=data['userId'],
+            assignment_id=data['assignmentId'],
+            state=RunStatus.IN_PROGRESS.value
+        ).order_by('id').last()
 
         answers = latest_user_run.user_input['answers']
 
+        # TODO: review score calculation logic
         for question in questions:
             if str(question.id) in latest_user_run.user_input['answers'] and question.info['right_answer'] == answers[str(question.id)]:
                 right_answers += 1
@@ -87,61 +80,68 @@ class ScoreView(generics.GenericAPIView):
         latest_user_run.state = RunStatus.FINISHED.value
         latest_user_run.save()
 
-        return Response({'score': latest_user_run.score})
+        return latest_user_run.score
 
-    def set_score(self, req, game_data):
+    def set_score(self, data, game_data):
         right_answers = 0
-        latest_user_run = Run.objects.filter(user_id=req['userId'],
-                                             assignment_id=req['assignmentId'], state=RunStatus.IN_PROGRESS.value) \
-            .order_by('id').last()
+        latest_user_run = Run.objects.filter(
+            user_id=data['userId'],
+            assignment_id=data['assignmentId'],
+            state=RunStatus.IN_PROGRESS.value
+        ).order_by('id').last()
 
-        for i in range(0, len(game_data)):
+        # TODO: review score calculation logic
+        for i in range(len(game_data)):
             answer = latest_user_run.user_input['answers'][str(i)]
-            if req['gameId'] == Game.QUIZ.value and answer == game_data[i].info['right_answer']:
-                right_answers = right_answers + 1
-            elif req['gameId'] == Game.HANGMAN.value and answer:
-                right_answers = right_answers + 1
+            if data['gameId'] == Game.QUIZ.value and answer == game_data[i].info['right_answer']:
+                right_answers += 1
+            elif data['gameId'] == Game.HANGMAN.value and answer:
+                right_answers += 1
 
         score = (right_answers * 100) / len(game_data)
         latest_user_run.score = score
         latest_user_run.state = RunStatus.FINISHED.value
         latest_user_run.save()
 
-        return Response({'score': score})
+        return score
 
-    def set_memory_score(self, req):
-        latest_user_run = Run.objects.filter(user_id=req['userId'],
-                                             assignment_id=req['assignmentId'], state=RunStatus.IN_PROGRESS.value) \
-            .order_by('id').last()
+    def set_memory_score(self, data):
+        latest_user_run = Run.objects.filter(
+            user_id=data['userId'],
+            assignment_id=data['assignmentId'],
+            state=RunStatus.IN_PROGRESS.value
+        ).order_by('id').last()
 
-        score = 100 - req['failedAttempts'] * req['totalMatches']
+        score = 100 - data['failedAttempts'] * data['totalMatches']
 
         latest_user_run.score = score
         latest_user_run.state = RunStatus.FINISHED.value
         latest_user_run.save()
 
-        return Response({'score': score})
+        return score
 
-    #REALLY BASIC VERSION
     def set_lti_grade(self, request):
-        req = request.data
+        # TODO: abstract getting the message_launch into a separate function
+        data = request.data
         tool_conf = DjangoDbToolConf()
         launch_data_storage = DjangoCacheDataStorage()
-        good_request = RequestCache.get_request(req['launchId'])
-        message_launch = ExtendedDjangoMessageLaunch.from_cache(req['launchId'], good_request, tool_conf,
-                                                                launch_data_storage=launch_data_storage)
+        message_launch = ExtendedDjangoMessageLaunch.from_cache(
+            data['launchId'],
+            RequestCache.get_request(data['launchId']),
+            tool_conf,
+            launch_data_storage=launch_data_storage
+        )
+        resource_link_id = message_launch.get_launch_data().get(
+            'https://purl.imsglobal.org/spec/lti/claim/resource_link',
+            {}
+        ).get('id')
 
-        """message_launch = DjangoMessageLaunch(request, tool_conf,
-                                             launch_data_storage=launch_data_storage)"""
-        resource_link_id = message_launch.get_launch_data() \
-            .get('https://purl.imsglobal.org/spec/lti/claim/resource_link', {}).get('id')
-
-        i = 1
         if not message_launch.has_ags():
             return HttpResponseForbidden("Don't have grades!")
 
         sub = message_launch.get_launch_data().get('sub')
         timestamp = datetime.utcnow().isoformat() + 'Z'
+        # TODO: use the actual score from the assigment
         earned_score = int(3000)
 
         ags = message_launch.get_ags()
@@ -163,5 +163,3 @@ class ScoreView(generics.GenericAPIView):
                 sc_line_item.set_resource_id(resource_link_id)
 
             ags.put_grade(sc, sc_line_item)
-
-        #return JsonResponse({'success': True, 'result': result.get('body')})

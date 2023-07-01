@@ -1,4 +1,4 @@
-from api.models.user import User
+from api.models import User
 from django.contrib.auth.hashers import make_password
 from rest_framework import serializers
 
@@ -15,7 +15,9 @@ class UserFormSerializer(serializers.ModelSerializer):
         model = User
 
         fields = [
-            'id', 'email', 'password'
+            'id',
+            'email',
+            'password',
         ]
 
         extra_kwargs = {
