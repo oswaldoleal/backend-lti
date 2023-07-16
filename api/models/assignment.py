@@ -1,5 +1,5 @@
-from api.models import Game
-from api.models import QuestionBank
+from .game import Game
+from .question_bank import QuestionBank
 from canvas.models import Course
 from django.db import models
 
