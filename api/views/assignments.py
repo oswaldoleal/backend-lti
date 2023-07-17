@@ -98,7 +98,8 @@ class AssignmentsView(generics.GenericAPIView):
             },
         })
 
-    def save_game(self, data):
+    def save_game(self, request):
+        data = request.data
         assignment = Assignment(
             name=data['assignmentName'],
             course_id=data['courseId'],
