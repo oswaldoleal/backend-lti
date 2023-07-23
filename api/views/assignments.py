@@ -41,7 +41,7 @@ class AssignmentsView(generics.GenericAPIView):
         return Response({'data': assignments.data})
 
     def post(self, request, *args, **kwargs):
-        game = Game(request.data['gameId'])
+        game = Game(int(request.data['gameId']))
         return self.SAVE_GAME_METHODS[game](request)
     
     def delete(self, request, *args, **kwargs):
