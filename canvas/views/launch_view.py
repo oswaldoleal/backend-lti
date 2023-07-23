@@ -5,7 +5,7 @@ from django.shortcuts import redirect
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
-from canvas.utils import RequestCache
+from canvas.utils import PyLTISessionCache
 
 
 class LaunchView(APIView):
@@ -29,9 +29,15 @@ class LaunchView(APIView):
 
     def get_context_from_launch_data(self, launch_data):
         ld_context = launch_data['https://purl.imsglobal.org/spec/lti/claim/context']
+        resource_link = launch_data['https://purl.imsglobal.org/spec/lti/claim/resource_link']
+        endpoints = launch_data['https://purl.imsglobal.org/spec/lti-ags/claim/endpoint']
+
         context = {
             'context_id': ld_context['id'],
             'context_type': ld_context['type'][0].split('/')[-1],
+            'resource_id': resource_link['id'],
+            'resource_name': resource_link.get('title', ''),
+            'lineitem': endpoints.get('lineitem', '')
         }
 
         return context
@@ -45,7 +51,8 @@ class LaunchView(APIView):
             launch_data_storage=launch_data_storage
         )
 
-        RequestCache.add_request(request=request, launch_id=message_launch.get_launch_id())
+        PyLTISessionCache.add_request(request=request, launch_id=message_launch.get_launch_id())
+        PyLTISessionCache.add_launch(launch = message_launch, launch_id=message_launch.get_launch_id())
 
         params = {
             'user_id': request.user.lti_user_id,
@@ -56,6 +63,7 @@ class LaunchView(APIView):
         }
         params.update(self.get_context_from_launch_data(request.launch_data))
 
+        # TODO: this URL should be a settings/env variable
         redirect_url = 'https://localhost:3000/redirect' + self.url_params_to_str(params)
         response_redirect = redirect(redirect_url)
 

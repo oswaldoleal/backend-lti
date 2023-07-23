@@ -1,1 +1,1 @@
-from .requests_cache import RequestCache
+from .session_cache import PyLTISessionCache

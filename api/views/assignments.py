@@ -49,7 +49,7 @@ class AssignmentsView(generics.GenericAPIView):
         return Response(HTTPStatus.OK)
 
     # LOGIC METHODS
-    def save_memory_game(self, request, files):
+    def save_memory_game(self, request):
         data = request.data
         game_id = int(data['gameId'])
         attempts = int(data['attempts'])
@@ -65,6 +65,8 @@ class AssignmentsView(generics.GenericAPIView):
             game_id=game_id,
             attempts=attempts,
             required_assignment_id=assignment_id,
+            resource_id=data['resourceId'],
+            lineitem_url=data['lineitemUrl'],
         )
         assignment.save()
 
@@ -81,13 +83,21 @@ class AssignmentsView(generics.GenericAPIView):
 
         return Response({'data': {'id': assignment.id, 'name': assignment.name, 'gameId': assignment.game_id}})
 
-    def save_snake_game(self, req):
-        assignment = Assignment(name=req['assignmentName'], course_id=req['courseId'], game_id=req['gameId'],
-                                attempts=req['attempts'], required_assignment_id=req.get('requiredAssignmentId'),
-                                question_bank_id=req['questionBankId'])
+    def save_snake_game(self, request):
+        data = request.data
+        assignment = Assignment(
+            name=data['assignmentName'],
+            course_id=data['courseId'],
+            game_id=data['gameId'],
+            attempts=data['attempts'],
+            required_assignment_id=data.get('requiredAssignmentId'),
+            question_bank_id=data['questionBankId'],
+            resource_id=data['resourceId'],
+            lineitem_url=data['lineitemUrl'],
+        )
         assignment.save()
 
-        game_data = GameData(info=self.get_game_info(req, req['gameId']), assignment=assignment)
+        game_data = GameData(info=self.get_game_info(data, data['gameId']), assignment=assignment)
         game_data.save()
 
         return Response({
@@ -106,6 +116,8 @@ class AssignmentsView(generics.GenericAPIView):
             game_id=data['gameId'],
             attempts=data['attempts'],
             required_assignment_id=data.get('requiredAssignmentId'),
+            resource_id=data['resourceId'],
+            lineitem_url=data['lineitemUrl'],
         )
 
         assignment.save()
