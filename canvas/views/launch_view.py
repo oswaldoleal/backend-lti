@@ -34,7 +34,6 @@ class LaunchView(APIView):
 
         context = {
             'context_id': ld_context['id'],
-            'context_type': ld_context['type'][0].split('/')[-1],
             'resource_id': resource_link['id'],
             'resource_name': resource_link.get('title', ''),
             'lineitem': endpoints.get('lineitem', '')
