@@ -52,6 +52,7 @@ class Assignment(models.Model):
     resource_id = models.CharField(
         blank=False,
         null=False,
+        max_length=120,
         help_text='Canvas ID for the assignment resource',
     )
 
