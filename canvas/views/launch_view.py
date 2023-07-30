@@ -1,5 +1,6 @@
 from pylti1p3.contrib.django import DjangoDbToolConf, DjangoCacheDataStorage, DjangoMessageLaunch
 
+from api.enums.role import Role
 from canvas.authentication import CanvasAuth
 from django.shortcuts import redirect
 from rest_framework.permissions import IsAuthenticated
@@ -47,10 +48,15 @@ class LaunchView(APIView):
 
         RequestCache.add_request(request=request, launch_id=message_launch.get_launch_id())
 
+        role = ''
+        if request.user.is_student():
+            role = Role.STUDENT.value
+        elif request.user.is_instructor():
+            role = Role.TEACHER.value
+
         params = {
             'user_id': request.user.lti_user_id,
-            'is_student': request.user.is_student(),
-            'is_instructor': request.user.is_instructor(),
+            'role': role,
             'launch_id': message_launch.get_launch_id(),
             'session_id': request.COOKIES.get('lti1p3-session-id'),
         }

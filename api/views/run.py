@@ -8,7 +8,7 @@ from rest_framework.response import Response
 from api.utils import BOARDS
 from api.utils.enums.game import Game
 from api.utils.enums.run_status import RunStatus
-from api.models import GameData, Run
+from api.models import GameData, Run, Question, Assignment
 from api.serializers import RunSerializer, GameDataSerializer
 
 
@@ -27,6 +27,14 @@ class RunView(generics.GenericAPIView):
     def get_objects(self, assignment_id):
         try:
             return GameData.objects.filter(assignment_id=assignment_id).order_by(
+                'info__order'
+            )
+        except GameData.DoesNotExist:
+            raise Http404
+
+    def get_questions(self, question_bank_id):
+        try:
+            return Question.objects.filter(question_bank_id=question_bank_id).order_by(
                 'info__order'
             )
         except GameData.DoesNotExist:
@@ -53,7 +61,7 @@ class RunView(generics.GenericAPIView):
 
         if latest_user_run:
             if answer is not None and answer['id'] != -1:
-                latest_user_run.user_input['answers'][answer['id']] = answer['answerIndex']
+                latest_user_run.user_input['answers'][answer['id']] = answer['answer']
             elif user_position is not None:
                 latest_user_run.user_input['x'] = user_position['x']
                 latest_user_run.user_input['y'] = user_position['y']
@@ -102,11 +110,15 @@ class RunView(generics.GenericAPIView):
                 state=RunStatus.IN_PROGRESS.value,
                 assignment_id=data['assignmentId'],
                 user_id=data['userId'],
-                user_input={'last_order': 0, "answers": {}}
+                user_input={'last_order': 0, "answers": [], 'failed_attempts': 0}
             )
+        else:
+            if data['failedAttempts'] != 0:
+                latest_user_run.user_input['failed_attempts'] = data['failedAttempts']
+            if len(data['answers']) != 0:
+                latest_user_run.user_input['answers'] = data["answers"]
 
-            latest_user_run.save()
-
+        latest_user_run.save()
         game_data = GameDataSerializer(self.get_objects(data['assignmentId'])[0]).data
         final_data = {
             "game_data": game_data,
@@ -144,7 +156,12 @@ class RunView(generics.GenericAPIView):
             run, order, answers = self.run_is_not_new(data, latest_user_run, order, answers)
 
         run = RunSerializer(run).data
-        game_datas = self.get_objects(data['assignmentId'])
+
+        if data['gameId'] == Game.QUIZ.value:
+            assignment = Assignment.objects.get(id=data['assignmentId'])
+            game_datas = self.get_questions(assignment.question_bank_id)
+        elif data['gameId'] == Game.HANGMAN.value:
+            game_datas = self.get_objects(data['assignmentId'])
 
         if len(game_datas) == order:
             game_data = None

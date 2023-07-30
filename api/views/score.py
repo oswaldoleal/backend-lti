@@ -2,7 +2,6 @@ import math
 
 from datetime import datetime
 from django.http import HttpResponseForbidden
-from pylti1p3.contrib.django import DjangoDbToolConf, DjangoCacheDataStorage, DjangoMessageLaunch
 from pylti1p3.grade import Grade
 from pylti1p3.lineitem import LineItem
 from rest_framework import generics
@@ -41,7 +40,11 @@ class ScoreView(generics.GenericAPIView):
         data = request.data
 
         score = 0
-        if data['gameId'] in [Game.QUIZ.value, Game.HANGMAN.value]:
+        if data['gameId'] == Game.QUIZ.value:
+            assignment = Assignment.objects.get(id=data['assignmentId'])
+            game_data = Question.objects.filter(question_bank_id=assignment.question_bank_id).order_by('info__order')
+            score = self.set_score(data, game_data)
+        if data['gameId'] == Game.HANGMAN.value:
             game_data = self.queryset.filter(assignment_id=data['assignmentId']).order_by('info__order')
             score = self.set_score(data, game_data)
         if data['gameId'] == Game.MEMORY.value:
@@ -49,7 +52,8 @@ class ScoreView(generics.GenericAPIView):
         if data['gameId'] == Game.SNAKE.value:
             score = self.set_snake_score(data)
 
-        self.set_lti_grade(request)
+        score = math.trunc(score)
+        #self.set_lti_grade(request)
         return Response({'score': score})
 
     # TODO: change this functions to only calculate the scores and delegate the actual score setting 
@@ -114,10 +118,14 @@ class ScoreView(generics.GenericAPIView):
 
         score = 100 - data['failedAttempts'] * data['totalMatches']
 
-        latest_user_run.score = score
+        if score > 0:
+            latest_user_run.score = score
+        else:
+            score = 0
+            latest_user_run.score = score
+
         latest_user_run.state = RunStatus.FINISHED.value
         latest_user_run.save()
-
         return score
 
     def set_lti_grade(self, request):
