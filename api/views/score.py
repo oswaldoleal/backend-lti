@@ -10,7 +10,7 @@ from rest_framework.response import Response
 from api.utils.enums.game import Game
 from api.utils.enums.run_status import RunStatus
 from api.models import GameData, Run, Assignment, Question
-from canvas.utils import RequestCache
+from canvas.utils import PyLTISessionCache
 
 from pylti1p3.contrib.django import (
     DjangoCacheDataStorage,
@@ -36,8 +36,9 @@ class ExtendedDjangoMessageLaunch(DjangoMessageLaunch):
 class ScoreView(generics.GenericAPIView):
     queryset = GameData.objects
 
-    def post(self, request):
+    def post(self, request, *args, **kwargs):
         data = request.data
+        assignment = Assignment.objects.get(id=data['assignmentId'])
 
         score = 0
         if data['gameId'] == Game.QUIZ.value:
@@ -52,8 +53,7 @@ class ScoreView(generics.GenericAPIView):
         if data['gameId'] == Game.SNAKE.value:
             score = self.set_snake_score(data)
 
-        score = math.trunc(score)
-        #self.set_lti_grade(request)
+        self.set_lti_grade(request, assignment, score)
         return Response({'score': score})
 
     # TODO: change this functions to only calculate the scores and delegate the actual score setting 
@@ -128,17 +128,11 @@ class ScoreView(generics.GenericAPIView):
         latest_user_run.save()
         return score
 
-    def set_lti_grade(self, request):
+    def set_lti_grade(self, request, assignment, score):
+        # NOTE: the score should be between 0 - 100
         # TODO: abstract getting the message_launch into a separate function
-        data = request.data
-        tool_conf = DjangoDbToolConf()
-        launch_data_storage = DjangoCacheDataStorage()
-        message_launch = ExtendedDjangoMessageLaunch.from_cache(
-            data['launchId'],
-            RequestCache.get_request(data['launchId']),
-            tool_conf,
-            launch_data_storage=launch_data_storage
-        )
+        message_launch = PyLTISessionCache.get_launch(request.data['launchId'])
+        
         resource_link_id = message_launch.get_launch_data().get(
             'https://purl.imsglobal.org/spec/lti/claim/resource_link',
             {}
@@ -149,25 +143,22 @@ class ScoreView(generics.GenericAPIView):
 
         sub = message_launch.get_launch_data().get('sub')
         timestamp = datetime.utcnow().isoformat() + 'Z'
-        # TODO: use the actual score from the assigment
-        earned_score = int(3000)
 
         ags = message_launch.get_ags()
 
         if ags.can_create_lineitem():
             sc = Grade()
-            sc.set_score_given(earned_score) \
+            sc.set_score_given(score) \
                 .set_score_maximum(100) \
                 .set_timestamp(timestamp) \
                 .set_activity_progress('Completed') \
                 .set_grading_progress('FullyGraded') \
                 .set_user_id(sub)
 
-            sc_line_item = LineItem()
-            sc_line_item.set_tag('BASIC LTI') \
-                .set_score_maximum(100) \
-                .set_label('BASIC LTI')
-            if resource_link_id:
-                sc_line_item.set_resource_id(resource_link_id)
+            sc_line_item = LineItem(lineitem={
+                'id': assignment.lineitem_url,
+                'resourceId': resource_link_id
+            })
+            sc_line_item.set_score_maximum(100)
 
             ags.put_grade(sc, sc_line_item)

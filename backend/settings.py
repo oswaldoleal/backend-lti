@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-1riga3=+43&2b&^ve+47yw_+pms(xpb+3&-dwedt@)4nokj(o2
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'canvas.docker']
 
 CORS_ORIGIN_ALLOW_ALL = True
 

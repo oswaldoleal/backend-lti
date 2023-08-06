@@ -27,12 +27,14 @@ class Assignment(models.Model):
     game = models.ForeignKey(
         to=Game,
         related_name='game',
-        on_delete=models.CASCADE)
+        on_delete=models.CASCADE
+    )
 
     required_assignment = models.ForeignKey('self',
-                                            related_name='needed_assignment',
-                                            null=True,
-                                            on_delete=models.CASCADE)
+        related_name='needed_assignment',
+        null=True,
+        on_delete=models.CASCADE
+    )
 
     attempts = models.PositiveSmallIntegerField(
         default=3,
@@ -45,4 +47,17 @@ class Assignment(models.Model):
         related_name='related_bank',
         on_delete=models.CASCADE,
         help_text='Relation to corresponding bank',
+    )
+
+    resource_id = models.CharField(
+        blank=False,
+        null=False,
+        max_length=120,
+        help_text='Canvas ID for the assignment resource',
+    )
+
+    lineitem_url = models.URLField(
+        blank=False,
+        null=False,
+        help_text='Direct URL for the item on the LTI platform',
     )

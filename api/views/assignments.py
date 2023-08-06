@@ -64,6 +64,8 @@ class AssignmentsView(generics.GenericAPIView):
             game_id=game_id,
             attempts=attempts,
             required_assignment_id=assignment_id,
+            resource_id=data['resourceId'],
+            lineitem_url=data['lineitemUrl'],
         )
         assignment.save()
 
@@ -82,9 +84,16 @@ class AssignmentsView(generics.GenericAPIView):
 
     def save_snake_game(self, request):
         data = request.data
-        assignment = Assignment(name=data['assignmentName'], course_id=data['courseId'], game_id=data['gameId'],
-                                attempts=data['attempts'], required_assignment_id=data.get('requiredAssignmentId'),
-                                question_bank_id=data['questionBankId'])
+        assignment = Assignment(
+            name=data['assignmentName'],
+            course_id=data['courseId'],
+            game_id=data['gameId'],
+            attempts=data['attempts'],
+            required_assignment_id=data.get('requiredAssignmentId'),
+            question_bank_id=data['questionBankId'],
+            resource_id=data['resourceId'],
+            lineitem_url=data['lineitemUrl'],
+        )
         assignment.save()
 
         game_data = GameData(info=self.get_game_info(data, data['gameId']), assignment=assignment)
@@ -121,6 +130,8 @@ class AssignmentsView(generics.GenericAPIView):
             game_id=data['gameId'],
             attempts=data['attempts'],
             required_assignment_id=data.get('requiredAssignmentId'),
+            resource_id=data['resourceId'],
+            lineitem_url=data['lineitemUrl'],
         )
 
         assignment.save()
