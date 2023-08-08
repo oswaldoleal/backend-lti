@@ -109,9 +109,16 @@ class AssignmentsView(generics.GenericAPIView):
 
     def save_quiz_game(self, request):
         data = request.data
-        assignment = Assignment(name=data['assignmentName'], course_id=data['courseId'], game_id=data['gameId'],
-                                attempts=data['attempts'], required_assignment_id=data.get('requiredAssignmentId'),
-                                question_bank_id=data['questionBankId'])
+        assignment = Assignment(
+            name=data['assignmentName'],
+            course_id=data['courseId'],
+            game_id=data['gameId'],
+            attempts=data['attempts'],
+            required_assignment_id=data.get('requiredAssignmentId'),
+            question_bank_id=data['questionBankId'],
+            resource_id=data['resourceId'],
+            lineitem_url=data['lineitemUrl'],
+        )
         assignment.save()
 
         return Response({
