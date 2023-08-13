@@ -9,7 +9,7 @@ from rest_framework.response import Response
 from typing import Any
 
 from api.models import Assignment, GameData, Run
-from api.serializers import AssignmentSerializer
+from api.serializers import AssignmentSerializer, GameDataSerializer
 from api.utils.enums import Game
 from api.utils.enums import MemoryType
 from api.utils.storage import ImageKitHandler
@@ -31,6 +31,11 @@ class AssignmentsView(generics.GenericAPIView):
     def get(self, request, *args, **kwargs):
         context_id = request.GET.get('courseId')
         assignments = AssignmentSerializer(Assignment.objects.filter(course_id=context_id), many=True)
+
+        for assignment in assignments.data:
+            if assignment['gameId'] in [Game.HANGMAN.value, Game.MEMORY.value, Game.SNAKE.value]:
+                game_data = GameDataSerializer(GameData.objects.filter(assignment_id=assignment['id']), many=True)
+                assignment['game_data'] = game_data.data
 
         if request.GET.get('isStudent') == 'true':
             assignment_counters = self.get_runs_by_assignment([assignment['id'] for assignment in assignments.data],
@@ -58,16 +63,27 @@ class AssignmentsView(generics.GenericAPIView):
 
         assignment_id = int(data.get('requiredAssignmentId')) if data.get('requiredAssignmentId') else None
 
-        assignment = Assignment(
-            name=data['assignmentName'],
-            course_id=data['courseId'],
-            game_id=game_id,
-            attempts=attempts,
-            required_assignment_id=assignment_id,
-            resource_id=data['resourceId'],
-            lineitem_url=data['lineitemUrl'],
-        )
-        assignment.save()
+        if data.get('id') is None:
+
+            assignment = Assignment(
+                name=data['assignmentName'],
+                course_id=data['courseId'],
+                game_id=game_id,
+                attempts=attempts,
+                required_assignment_id=assignment_id,
+                resource_id=data['resourceId'],
+                lineitem_url=data['lineitemUrl'],
+            )
+            assignment.save()
+        else:
+            Assignment.objects \
+                .filter(id=int(data.get('id'))) \
+                .update(
+                name=data['assignmentName'],
+                attempts=data['attempts'],
+                required_assignment_id=data.get('requiredAssignmentId'))
+            assignment = Assignment.objects.get(id=data.get('id'))
+            GameData.objects.filter(assignment_id=data.get('id')).delete()
 
         # TODO: turn this into a util function
         folder_path = os.environ.get('FOLDER_PATH')
@@ -77,71 +93,92 @@ class AssignmentsView(generics.GenericAPIView):
         for f in files:
             files_names.append(FileSystemStorage(location=folder).save(f.name, f))
 
-        game_data = GameData(info=self.get_game_info(questions, game_id, files_names, folder=folder), assignment=assignment)
+        game_data = GameData(info=self.get_game_info(questions, game_id, files_names, folder=folder),
+                             assignment=assignment)
         game_data.save()
 
-        return Response({'data': {'id': assignment.id, 'name': assignment.name, 'gameId': assignment.game_id}})
+        return Response({'data': AssignmentSerializer(assignment).data})
 
     def save_snake_game(self, request):
         data = request.data
-        assignment = Assignment(
-            name=data['assignmentName'],
-            course_id=data['courseId'],
-            game_id=data['gameId'],
-            attempts=data['attempts'],
-            required_assignment_id=data.get('requiredAssignmentId'),
-            question_bank_id=data['questionBankId'],
-            resource_id=data['resourceId'],
-            lineitem_url=data['lineitemUrl'],
-        )
-        assignment.save()
+        if data.get('id') is None:
+            assignment = Assignment(
+                name=data['assignmentName'],
+                course_id=data['courseId'],
+                game_id=data['gameId'],
+                attempts=data['attempts'],
+                required_assignment_id=data.get('requiredAssignmentId'),
+                question_bank_id=data['questionBankId'],
+                resource_id=data['resourceId'],
+                lineitem_url=data['lineitemUrl'],
+            )
+            assignment.save()
+        else:
+            Assignment.objects \
+                .filter(id=int(data.get('id'))) \
+                .update(
+                name=data['assignmentName'],
+                attempts=data['attempts'],
+                required_assignment_id=data.get('requiredAssignmentId'),
+                question_bank_id=data['questionBankId'])
+            assignment = Assignment.objects.get(id=data.get('id'))
+            GameData.objects.filter(assignment_id=data.get('id')).delete()
 
         game_data = GameData(info=self.get_game_info(data, data['gameId']), assignment=assignment)
         game_data.save()
 
-        return Response({
-            'data': {
-                'id': assignment.id,
-                'name': assignment.name,
-                'gameId': assignment.game_id,
-            },
-        })
+        return Response({'data': AssignmentSerializer(assignment).data})
 
     def save_quiz_game(self, request):
         data = request.data
-        assignment = Assignment(
-            name=data['assignmentName'],
-            course_id=data['courseId'],
-            game_id=data['gameId'],
-            attempts=data['attempts'],
-            required_assignment_id=data.get('requiredAssignmentId'),
-            question_bank_id=data['questionBankId'],
-            resource_id=data['resourceId'],
-            lineitem_url=data['lineitemUrl'],
-        )
-        assignment.save()
+        if data.get('id') is None:
+            assignment = Assignment(
+                name=data['assignmentName'],
+                course_id=data['courseId'],
+                game_id=data['gameId'],
+                attempts=data['attempts'],
+                required_assignment_id=data.get('requiredAssignmentId'),
+                question_bank_id=data['questionBankId'],
+                resource_id=data['resourceId'],
+                lineitem_url=data['lineitemUrl'],
+            )
+            assignment.save()
+        else:
+            Assignment.objects \
+                .filter(id=data.get('id')) \
+                .update(
+                name=data['assignmentName'],
+                attempts=data['attempts'],
+                required_assignment_id=data.get('requiredAssignmentId'),
+                question_bank_id=data['questionBankId'])
+            assignment = Assignment.objects.get(id=data.get('id'))
 
-        return Response({
-            'data': {
-                'id': assignment.id,
-                'name': assignment.name,
-                'gameId': assignment.game_id,
-            },
-        })
+        return Response({'data': AssignmentSerializer(assignment).data})
 
     def save_hangman_game(self, request):
         data = request.data
-        assignment = Assignment(
-            name=data['assignmentName'],
-            course_id=data['courseId'],
-            game_id=data['gameId'],
-            attempts=data['attempts'],
-            required_assignment_id=data.get('requiredAssignmentId'),
-            resource_id=data['resourceId'],
-            lineitem_url=data['lineitemUrl'],
-        )
+        if data.get('id') is None:
+            assignment = Assignment(
+                name=data['assignmentName'],
+                course_id=data['courseId'],
+                game_id=data['gameId'],
+                attempts=data['attempts'],
+                required_assignment_id=data.get('requiredAssignmentId'),
+                resource_id=data['resourceId'],
+                lineitem_url=data['lineitemUrl'],
+            )
 
-        assignment.save()
+            assignment.save()
+        else:
+            Assignment.objects \
+                .filter(id=data.get('id')) \
+                .update(
+                name=data['assignmentName'],
+                attempts=data['attempts'],
+                required_assignment_id=data.get('requiredAssignmentId'))
+            assignment = Assignment.objects.get(id=data.get('id'))
+            GameData.objects.filter(assignment_id=data.get('id')).delete()
+
         game_data_list = []
 
         for question in data['questions']:
@@ -149,7 +186,7 @@ class AssignmentsView(generics.GenericAPIView):
             game_data_list.append(game_data)
 
         GameData.objects.bulk_create(game_data_list)
-        return Response({'data': {'id': assignment.id, 'name': assignment.name, 'gameId': assignment.game_id}})
+        return Response({'data': AssignmentSerializer(assignment).data})
 
     def get_game_info(self, data, game_id, files_names=None, folder=''):
         if game_id == Game.QUIZ.value:

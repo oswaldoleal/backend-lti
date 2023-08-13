@@ -9,5 +9,5 @@ class GamesView(generics.ListAPIView):
     serializer_class = GameSerializer
 
     def get(self, request, *args, **kwargs):
-        serializer = GameSerializer(self.get_queryset(), many=True)
+        serializer = GameSerializer(self.get_queryset().order_by('id'), many=True)
         return Response({'data': serializer.data})
