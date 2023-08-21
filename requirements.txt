@@ -9,3 +9,4 @@ psycopg[binary]
 django[argon2]
 imagekitio
 StrEnum
+pycryptodome

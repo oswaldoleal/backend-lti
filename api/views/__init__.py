@@ -1,5 +1,5 @@
 from .assignments import AssignmentsView
-from .games import GamesView
+from .games import GamesView, GameView
 from .login import LoginView
 from .register import RegisterView
 from .questions import QuestionsView

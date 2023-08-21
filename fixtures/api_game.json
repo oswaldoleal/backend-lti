@@ -4,8 +4,8 @@
     "pk": 1,
     "fields": {
       "name": "quiz",
-      "description": "Acierta todas las preguntas para ganar.",
-      "instructions": "Una pregunta puede venir en tres modalidades: 1. Selección Simple\n2. Selección Múltiple\n3. Verdadero o Falso\n\nEl puntaje va de 0 a 100.",
+      "description": "Acierta todas las preguntas para ganar",
+      "instructions": "Para ganar el juego tienes que escoger las opciones correctas en una serie de preguntas \n\nUna pregunta puede venir en tres modalidades:\n\nSelección Simple\n\nSelección Múltiple\n\nVerdadero o Falso",
       "svg_route": "/static/games/quiz.png"
     }
   },
@@ -14,8 +14,8 @@
     "pk": 2,
     "fields": {
       "name": "hangman",
-      "description": "Adivina la palabra o perderás.",
-      "instructions": "Don't Lose.",
+      "description": "Adivina la palabra para ganar",
+      "instructions": "Para ganar el juego tienes que adivinar las palabras presentadas \n\nTienes que adivinar cada letra que compone la palabra\n\nSi la letra forma parte de la palabra, esta se ubica en su lugar\n\nSi la letra no forma parte de la palabra, se dibuja una parte del cuerpo del ahorcado\n\nEl muñeco que se va dibujando tiene 6 partes, cabeza, cuerpo, dos brazos y dos piernas. Pierdes si se dibujan todas las partes\n\nSe te dará una pista para facilitar la adivinanza",
       "svg_route": "/static/games/hanged.png"
     }
   },
@@ -24,8 +24,8 @@
     "pk": 3,
     "fields": {
       "name": "memory",
-      "description": "Empareja todas las tarjetas.",
-      "instructions": "Placeholder",
+      "description": "Empareja todas las tarjetas",
+      "instructions": "Para ganar el juego tienes que unir todas las parejas\n\nAl iniciar se te presentan varias cartas, para levantar una solo tienes que presionarla\n\nAl levantar dos, se evaluarán si son pareja\n\nEn caso de ser pareja, quedarán levantadas\n\nEn caso de no serlo, se guardará el intento equivocado que afectará tu nota final",
       "svg_route": "/static/games/memoria.png"
     }
   },
@@ -34,8 +34,8 @@
     "pk": 4,
     "fields": {
       "name": "snakes",
-      "description": "Llega hasta la meta mientras evitas caer en serpientes.",
-      "instructions": "Placeholder",
+      "description": "Llega hasta la meta mientras evitas caer en serpientes",
+      "instructions": "Para ganar el juego tienes que llegar a la meta\n\nPara poder avanzar tendrás que presionar el dado, el número que aparezca representa los pasos que dará tu ficha en el tablero\n\nCada cierta cantidad de lanzamientos de dados; se te presentará una pregunta simulando un quiz\n\nSi caes en una serpiente, retrocederás en el tablero, pero si caes en una escalera, avanzarás en el tablero\n\nPara llegar a la meta tienes que caer exactamente en la última casilla, en caso de que sobrepases la cantidad de pasos necesarios, retrocederás los pasos sobrantes",
       "svg_route": "/static/games/snake.png"
     }
   }

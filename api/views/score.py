@@ -76,11 +76,11 @@ class ScoreView(generics.GenericAPIView):
                 right_answers += 1
 
         if len(answers) > 0:
-            score = (right_answers * 100) / len(latest_user_run.user_input['answers'])
+            score = round((right_answers * 100) / len(latest_user_run.user_input['answers']), 2)
         else:
             score = 100
 
-        latest_user_run.score = math.trunc(score)
+        latest_user_run.score = score
         latest_user_run.state = RunStatus.FINISHED.value
         latest_user_run.save()
 
@@ -102,7 +102,7 @@ class ScoreView(generics.GenericAPIView):
             elif data['gameId'] == Game.HANGMAN.value and answer:
                 right_answers += 1
 
-        score = (right_answers * 100) / len(game_data)
+        score = round((right_answers * 100) / len(game_data), 2)
         latest_user_run.score = score
         latest_user_run.state = RunStatus.FINISHED.value
         latest_user_run.save()
@@ -116,7 +116,7 @@ class ScoreView(generics.GenericAPIView):
             state=RunStatus.IN_PROGRESS.value
         ).order_by('id').last()
 
-        score = 100 - data['failedAttempts'] * data['totalMatches']
+        score = round(100 - data['failedAttempts'] * data['totalMatches'], 2)
 
         if score > 0:
             latest_user_run.score = score

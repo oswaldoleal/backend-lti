@@ -1,6 +1,6 @@
 from django.contrib.auth.models import AbstractBaseUser
 from django.db import models
-from pylti1p3.contrib.django.lti1p3_tool_config.models import LtiTool
+from pylti1p3.contrib.django.lti1p3_tool_config.models import LtiToolKey
 
 
 class User(AbstractBaseUser):
@@ -10,10 +10,10 @@ class User(AbstractBaseUser):
         help_text='User email',
     )
 
-    ltiConfig = models.ForeignKey(
-        to=LtiTool,
+    ltiConfigKey = models.ForeignKey(
+        to=LtiToolKey,
         on_delete=models.CASCADE,
-        related_name='ltiConfig',
+        related_name='ltiConfigKey',
         help_text='Relation to corresponding tool deployment on an LTI Platform',
         null=True
     )

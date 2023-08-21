@@ -1,6 +1,7 @@
 from pylti1p3.contrib.django import DjangoDbToolConf, DjangoCacheDataStorage, DjangoMessageLaunch
 
 from api.enums.role import Role
+from api.models import Assignment
 from canvas.authentication import CanvasAuth
 from django.shortcuts import redirect
 from rest_framework.permissions import IsAuthenticated
@@ -42,6 +43,33 @@ class LaunchView(APIView):
 
         return context
 
+    def process_attempts(self, request, params, role):
+        assignment = Assignment.objects.filter(
+            lineitem_url=request.launch_data['https://purl.imsglobal.org/spec/lti-ags/claim/endpoint']
+            .get('lineitem', '')).first()
+
+        custom_variables = request.launch_data.get('https://purl.imsglobal.org/spec/lti/claim/custom')
+        if custom_variables is not None:
+            params['attempts'] = custom_variables.get('assignment_attempts')
+            if params['attempts'] is None:
+                params['attempts'] = -1
+            attempts_submitted = custom_variables.get('student_attempts')
+        elif custom_variables is None:
+            params['attempts'] = -1
+
+        if role == Role.STUDENT.value and assignment is not None:
+            params['launchedAssignmentId'] = assignment.id
+            params['launchedGameId'] = assignment.game_id
+            if custom_variables is not None and attempts_submitted is not None and params['attempts'] == attempts_submitted:
+                params['attemptsLimitHasBeenReached'] = True
+
+        elif role == Role.TEACHER.value and assignment is not None:
+            params['linkedAssignmentId'] = assignment.id
+            if assignment.attempts != params['attempts'] or assignment.name != params['resource_name']:
+                assignment.name = params['resource_name']
+                assignment.attempts = params['attempts']
+                assignment.save()
+
     def post(self, request, *args, **kwargs):
         tool_conf = DjangoDbToolConf()
         launch_data_storage = DjangoCacheDataStorage()
@@ -52,7 +80,7 @@ class LaunchView(APIView):
         )
 
         PyLTISessionCache.add_request(request=request, launch_id=message_launch.get_launch_id())
-        PyLTISessionCache.add_launch(launch = message_launch, launch_id=message_launch.get_launch_id())
+        PyLTISessionCache.add_launch(launch=message_launch, launch_id=message_launch.get_launch_id())
 
         role = ''
         if request.user.is_student():
@@ -67,6 +95,7 @@ class LaunchView(APIView):
             'session_id': request.COOKIES.get('lti1p3-session-id'),
         }
         params.update(self.get_context_from_launch_data(request.launch_data))
+        self.process_attempts(request, params, role)
 
         # TODO: this URL should be a settings/env variable
         redirect_url = 'https://localhost:3000/redirect' + self.url_params_to_str(params)

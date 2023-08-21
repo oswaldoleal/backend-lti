@@ -36,8 +36,7 @@ class Assignment(models.Model):
         on_delete=models.CASCADE
     )
 
-    attempts = models.PositiveSmallIntegerField(
-        default=3,
+    attempts = models.SmallIntegerField(
         help_text="Number of attempts a student has for the assignment"
     )
 

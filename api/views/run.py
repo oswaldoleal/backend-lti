@@ -141,6 +141,10 @@ class RunView(generics.GenericAPIView):
         answers = []
 
         if latest_user_run is None:
+            user_input = {'last_order': 0, "answers": {}}
+
+            if data['gameId'] == Game.HANGMAN.value:
+                user_input['clickedLetters'] = []
             run = Run(
                 start_date=start_date,
                 end_date=start_date + timedelta(minutes=30),
@@ -148,13 +152,13 @@ class RunView(generics.GenericAPIView):
                 state=RunStatus.IN_PROGRESS.value,
                 assignment_id=data['assignmentId'],
                 user_id=data['userId'],
-                user_input={'last_order': 0, "answers": {}},
+                user_input=user_input,
             )
 
-            run.save()
         else:
             run, order, answers = self.run_is_not_new(data, latest_user_run, order, answers)
 
+        run.save()
         run = RunSerializer(run).data
 
         if data['gameId'] == Game.QUIZ.value:
@@ -180,13 +184,17 @@ class RunView(generics.GenericAPIView):
     def run_is_not_new(self, data, run, order, answers):
         latest_run_order = run.user_input.get('last_order')
 
+        if data['gameId'] == Game.HANGMAN.value and len(data['clickedLetters']) > len(run.user_input['clickedLetters']):
+            run.user_input['clickedLetters'] = data['clickedLetters']
+
         if order > latest_run_order:
             run.user_input['last_order'] = order
             if data['gameId'] == Game.QUIZ.value:
                 run.user_input['answers'][order - 1] = data['answerIndex']
             elif data['gameId'] == Game.HANGMAN.value:
                 run.user_input['answers'][order - 1] = data['hasWon']
-            run.save()
+                run.user_input['clickedLetters'] = []
+
         elif order < latest_run_order:
             order = latest_run_order
 

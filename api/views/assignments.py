@@ -78,10 +78,7 @@ class AssignmentsView(generics.GenericAPIView):
         else:
             Assignment.objects \
                 .filter(id=int(data.get('id'))) \
-                .update(
-                name=data['assignmentName'],
-                attempts=data['attempts'],
-                required_assignment_id=data.get('requiredAssignmentId'))
+                .update(required_assignment_id=data.get('requiredAssignmentId'))
             assignment = Assignment.objects.get(id=data.get('id'))
             GameData.objects.filter(assignment_id=data.get('id')).delete()
 
@@ -117,8 +114,6 @@ class AssignmentsView(generics.GenericAPIView):
             Assignment.objects \
                 .filter(id=int(data.get('id'))) \
                 .update(
-                name=data['assignmentName'],
-                attempts=data['attempts'],
                 required_assignment_id=data.get('requiredAssignmentId'),
                 question_bank_id=data['questionBankId'])
             assignment = Assignment.objects.get(id=data.get('id'))
@@ -147,8 +142,6 @@ class AssignmentsView(generics.GenericAPIView):
             Assignment.objects \
                 .filter(id=data.get('id')) \
                 .update(
-                name=data['assignmentName'],
-                attempts=data['attempts'],
                 required_assignment_id=data.get('requiredAssignmentId'),
                 question_bank_id=data['questionBankId'])
             assignment = Assignment.objects.get(id=data.get('id'))
@@ -172,10 +165,7 @@ class AssignmentsView(generics.GenericAPIView):
         else:
             Assignment.objects \
                 .filter(id=data.get('id')) \
-                .update(
-                name=data['assignmentName'],
-                attempts=data['attempts'],
-                required_assignment_id=data.get('requiredAssignmentId'))
+                .update(required_assignment_id=data.get('requiredAssignmentId'))
             assignment = Assignment.objects.get(id=data.get('id'))
             GameData.objects.filter(assignment_id=data.get('id')).delete()
 
