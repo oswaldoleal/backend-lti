@@ -74,7 +74,7 @@ class LaunchView(APIView):
         if role == Role.STUDENT.value and assignment is not None:
             params['launchedAssignmentId'] = assignment.id
             params['launchedGameId'] = assignment.game_id
-            if custom_variables is not None and attempts_submitted is not None and attempts_submitted.isnumeric()\
+            if custom_variables is not None and attempts_submitted is not None and isinstance(attempts_submitted, int)\
                     and params['attempts'] <= attempts_submitted:
                 params['attemptsLimitHasBeenReached'] = True
 
