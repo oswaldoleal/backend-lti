@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pylti1p3.contrib.django import DjangoDbToolConf, DjangoCacheDataStorage, DjangoMessageLaunch
 
 from api.enums.role import Role
@@ -43,6 +45,17 @@ class LaunchView(APIView):
 
         return context
 
+    def process_time_limit(self, custom_v, params, role):
+        try:
+            if role == Role.STUDENT.value:
+                assignment_submission_time_limit = datetime.strptime(custom_v.get('submission_time_limit'), '%Y-%m-%dT%H:%M:%S.%f%z')
+                dt = datetime.now(tz=assignment_submission_time_limit.tzinfo)
+                if dt >= assignment_submission_time_limit:
+                    params['timeHasRunOut'] = True
+        except (ValueError, TypeError):
+            pass
+
+
     def process_attempts(self, request, params, role):
         assignment = Assignment.objects.filter(
             lineitem_url=request.launch_data['https://purl.imsglobal.org/spec/lti-ags/claim/endpoint']
@@ -54,21 +67,25 @@ class LaunchView(APIView):
             if params['attempts'] is None:
                 params['attempts'] = -1
             attempts_submitted = custom_variables.get('student_attempts')
+            self.process_time_limit(custom_variables, params, role)
         elif custom_variables is None:
             params['attempts'] = -1
 
         if role == Role.STUDENT.value and assignment is not None:
             params['launchedAssignmentId'] = assignment.id
             params['launchedGameId'] = assignment.game_id
-            if custom_variables is not None and attempts_submitted is not None and params['attempts'] == attempts_submitted:
+            if custom_variables is not None and attempts_submitted is not None and attempts_submitted.isnumeric()\
+                    and params['attempts'] <= attempts_submitted:
                 params['attemptsLimitHasBeenReached'] = True
 
-        elif role == Role.TEACHER.value and assignment is not None:
+        elif assignment is not None:
             params['linkedAssignmentId'] = assignment.id
             if assignment.attempts != params['attempts'] or assignment.name != params['resource_name']:
                 assignment.name = params['resource_name']
                 assignment.attempts = params['attempts']
                 assignment.save()
+
+
 
     def post(self, request, *args, **kwargs):
         tool_conf = DjangoDbToolConf()
