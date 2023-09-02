@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 
 from pylti1p3.contrib.django import DjangoDbToolConf, DjangoCacheDataStorage, DjangoMessageLaunch
@@ -114,8 +115,7 @@ class LaunchView(APIView):
         params.update(self.get_context_from_launch_data(request.launch_data))
         self.process_attempts(request, params, role)
 
-        # TODO: this URL should be a settings/env variable
-        redirect_url = 'https://localhost:3000/redirect' + self.url_params_to_str(params)
+        redirect_url = os.getenv('FRONTEND_URL') + self.url_params_to_str(params)
         response_redirect = redirect(redirect_url)
 
         return response_redirect
