@@ -1,4 +1,5 @@
 from .assignments import AssignmentsView
+from .assignment_stats import AssignmentStatsView
 from .games import GamesView
 from .login import LoginView
 from .register import RegisterView
