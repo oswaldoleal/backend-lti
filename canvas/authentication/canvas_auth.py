@@ -33,6 +33,10 @@ class CanvasAuth(authentication.BaseAuthentication):
             user = user[0]
             user.roles = user_roles
 
+            if (user.name != name):
+                user.name = name
+                LTIUser.save(user)
+
         context = message_launch_data['https://purl.imsglobal.org/spec/lti/claim/context']
         deployment_id = message_launch_data['https://purl.imsglobal.org/spec/lti/claim/deployment_id']
         Course.objects.update_or_create(name=context['title'], id=context['id'], deployment_id=deployment_id)
