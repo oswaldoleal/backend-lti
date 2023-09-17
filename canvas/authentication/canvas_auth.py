@@ -23,14 +23,19 @@ class CanvasAuth(authentication.BaseAuthentication):
         user_roles = message_launch_data['https://purl.imsglobal.org/spec/lti/claim/roles']
 
         email = message_launch_data.get('email', None)
+        name = message_launch_data.get('name', None)
 
         user = LTIUser.objects.filter(lti_user_id=user_id)
         if len(user) == 0:
-            user = LTIUser(lti_user_id=user_id, roles=user_roles, email=email)
+            user = LTIUser(lti_user_id=user_id, roles=user_roles, email=email, name=name)
             LTIUser.save(user)
         else:
             user = user[0]
             user.roles = user_roles
+
+            if (user.name != name):
+                user.name = name
+                LTIUser.save(user)
 
         context = message_launch_data['https://purl.imsglobal.org/spec/lti/claim/context']
         deployment_id = message_launch_data['https://purl.imsglobal.org/spec/lti/claim/deployment_id']
