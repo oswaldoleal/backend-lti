@@ -9,4 +9,4 @@ psycopg[binary]
 django[argon2]
 imagekitio
 StrEnum
-pycryptodome
+pycryptodome==3.18.0
