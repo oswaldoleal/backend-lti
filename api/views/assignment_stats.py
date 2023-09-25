@@ -16,9 +16,12 @@ class AssignmentStatsView(generics.RetrieveAPIView):
         # TODO: when saving the score from an assigment set the highest score from all the runs so this query isn't so hard :(
         # TODO: sort the result of leaderboard_runs
         leaderboard_runs = Run.objects.all().filter(assignment=assignment_id).values('user', 'user__name').annotate(Max('score'))
+        dry = [r for r in leaderboard_runs]
+        dry.sort(key= lambda r : r['score__max'], reverse=True)
         data['leaderboard'] = {
             'data': leaderboard_runs,
         }
+        [print(x) for x in dry]
 
         SCORE_RESOLUTION = 10
         # SCORE HISTOGRAM
@@ -32,8 +35,8 @@ class AssignmentStatsView(generics.RetrieveAPIView):
             'x_max': 100,
             'y_min': 0,
             'y_max': 100,
-            'avg': sum([r['score__max'] for r in leaderboard_runs]) / len(leaderboard_runs),
-            'mean': leaderboard_runs[len(leaderboard_runs) // 2]['score__max'],
+            # 'avg': sum([r['score__max'] for r in leaderboard_runs]) / len(leaderboard_runs),
+            # 'mean': leaderboard_runs[len(leaderboard_runs) // 2]['score__max'],
             'resolution': SCORE_RESOLUTION,
         }
 
@@ -51,12 +54,12 @@ class AssignmentStatsView(generics.RetrieveAPIView):
         data['time_histogram'] = {
             'data': time_histogram,
             'raw': [r['time'].seconds / 60 for r in timed_runs],
-            'x_min': min([int(k) for k in time_histogram.keys()]),
-            'x_max': max([int(k) for k in time_histogram.keys()]),
+            'x_min': min([int(k) for k in time_histogram.keys()] + [0]),
+            'x_max': max([int(k) for k in time_histogram.keys()] + [0]),
             'y_min': 0,
-            'y_max': max([int(k) for k in time_histogram.values()]),
-            'avg': sum([r['time'].seconds for r in timed_runs]) / len(timed_runs) / 60,
-            'mean': timed_runs[len(timed_runs) // 2]['time'].seconds / 60,
+            'y_max': max([int(k) for k in time_histogram.values()] + [0]),
+            # 'avg': sum([r['time'].seconds for r in timed_runs]) / len(timed_runs) / 60,
+            # 'mean': timed_runs[len(timed_runs) // 2]['time'].seconds / 60,
             'resolution': TIME_RESOLUTION,
         }
 
@@ -74,11 +77,11 @@ class AssignmentStatsView(generics.RetrieveAPIView):
             'data': tries_histogram,
             'raw': [r['user__count'] for r in tries_runs],
             'x_min': 0,
-            'x_max': max([int(k) for k in tries_histogram.keys()]),
+            'x_max': max([int(k) for k in tries_histogram.keys()] + [0]),
             'y_min': 0,
-            'y_max': max([int(k) for k in tries_histogram.values()]),
-            'avg': sum([r['user__count'] for r in tries_runs]) / len(tries_runs),
-            'mean': tries_runs[len(tries_runs) // 2]['user__count'],
+            'y_max': max([int(k) for k in tries_histogram.values()] + [0]),
+            # 'avg': sum([r['user__count'] for r in tries_runs]) / len(tries_runs),
+            # 'mean': tries_runs[len(tries_runs) // 2]['user__count'],
             'resolution': 1,
         }
 
