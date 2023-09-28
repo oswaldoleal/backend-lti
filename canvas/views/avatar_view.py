@@ -23,9 +23,6 @@ class AvatarView(generics.GenericAPIView):
         except Http404:
             return HttpResponse(status=HTTPStatus.BAD_REQUEST, reason="userId does not belong to any user")
 
-        if request.data['config'].get('hairColor') is None:
-            request.data['config']['hairColor'] = "#d18080"
-
         AvatarConfig.objects.update_or_create(user_id=user.pk,
                                               defaults={'user_id': user.pk,
                                                         'config': request.data['config']}
