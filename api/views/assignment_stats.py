@@ -16,12 +16,12 @@ class AssignmentStatsView(generics.RetrieveAPIView):
         # TODO: when saving the score from an assigment set the highest score from all the runs so this query isn't so hard :(
         # TODO: sort the result of leaderboard_runs
         leaderboard_runs = Run.objects.all().filter(assignment=assignment_id).values('user', 'user__name').annotate(Max('score'))
-        dry = [r for r in leaderboard_runs]
-        dry.sort(key= lambda r : r['score__max'], reverse=True)
+        sorted_runs = [r for r in leaderboard_runs]
+        sorted_runs.sort(key= lambda r : r['score__max'], reverse=True)
         data['leaderboard'] = {
-            'data': leaderboard_runs,
+            'data': sorted_runs,
         }
-        [print(x) for x in dry]
+        [print(x) for x in sorted_runs]
 
         SCORE_RESOLUTION = 10
         # SCORE HISTOGRAM
