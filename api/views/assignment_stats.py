@@ -42,8 +42,8 @@ class AssignmentStatsView(generics.RetrieveAPIView):
 
         # TIME HISTOGRAM
         # TODO: sort the result of timed_runs
-        TIME_RESOLUTION = 2
-        timed_runs = Run.objects.all().filter(assignment=assignment_id).values('id').annotate(time=F('end_date') - F('start_date'))
+        TIME_RESOLUTION = 10
+        timed_runs = Run.objects.all().filter(assignment=assignment_id).values('id').annotate(time=F('end_date') - F('start_date')).annotate(Max('score'))
         time_histogram = {}
         for r in timed_runs:
             bin_number = floor(r['time'].seconds / 60 / TIME_RESOLUTION) * TIME_RESOLUTION
@@ -82,7 +82,7 @@ class AssignmentStatsView(generics.RetrieveAPIView):
             'y_max': max([int(k) for k in tries_histogram.values()] + [0]),
             # 'avg': sum([r['user__count'] for r in tries_runs]) / len(tries_runs),
             # 'mean': tries_runs[len(tries_runs) // 2]['user__count'],
-            'resolution': 1,
+            'resolution': 10,
         }
 
         return Response(data)
@@ -100,4 +100,3 @@ class AssignmentStatsView(generics.RetrieveAPIView):
 
     }
     """
-
