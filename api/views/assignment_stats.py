@@ -42,7 +42,7 @@ class AssignmentStatsView(generics.RetrieveAPIView):
 
         # TIME HISTOGRAM
         # TODO: sort the result of timed_runs
-        TIME_RESOLUTION = 1
+        TIME_RESOLUTION = 2
         timed_runs = Run.objects.all().filter(assignment=assignment_id).values('id').annotate(time=F('end_date') - F('start_date'))
         time_histogram = {}
         for r in timed_runs:
