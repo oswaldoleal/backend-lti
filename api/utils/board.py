@@ -77,7 +77,7 @@ BOARDS = [{'tiles_per_row': 10, 'rem_per_tile': 3, 'tiles_per_column': 10,
                        'initialPosition': 77,
                        'finalPosition': 46,
                        'direction': Direction.RIGHT.value,
-                       'yMovement': 3,
+                       'yMovement': -3,
                        'xMovement': 2
                    },
                    {
