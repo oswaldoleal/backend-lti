@@ -55,7 +55,7 @@ class AssignmentStatsView(generics.RetrieveAPIView):
             'data': time_histogram,
             'raw': [r['time'].seconds / 60 for r in timed_runs],
             'x_min': min([int(k) for k in time_histogram.keys()] + [0]),
-            'x_max': max([int(k) for k in time_histogram.keys()] + [0]),
+            'x_max': max([int(k) for k in time_histogram.keys()] + [0]) + 1,
             'y_min': 0,
             'y_max': max([int(k) for k in time_histogram.values()] + [0]),
             # 'avg': sum([r['time'].seconds for r in timed_runs]) / len(timed_runs) / 60,
