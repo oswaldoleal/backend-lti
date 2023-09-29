@@ -1,22 +1,19 @@
-import math
+from datetime import datetime, timezone
 
-from datetime import datetime
 from django.http import HttpResponseForbidden
+from pylti1p3.contrib.django import (
+    DjangoMessageLaunch,
+)
 from pylti1p3.grade import Grade
 from pylti1p3.lineitem import LineItem
 from rest_framework import generics
 from rest_framework.response import Response
 
+from api.models import GameData, Run, Assignment, Question
 from api.utils.enums.game import Game
 from api.utils.enums.run_status import RunStatus
-from api.models import GameData, Run, Assignment, Question
 from canvas.utils import PyLTISessionCache
 
-from pylti1p3.contrib.django import (
-    DjangoCacheDataStorage,
-    DjangoDbToolConf,
-    DjangoMessageLaunch,
-)
 
 class ExtendedDjangoMessageLaunch(DjangoMessageLaunch):
 
@@ -82,6 +79,7 @@ class ScoreView(generics.GenericAPIView):
 
         latest_user_run.score = score
         latest_user_run.state = RunStatus.FINISHED.value
+        latest_user_run.end_date = datetime.now(timezone.utc)
         latest_user_run.save()
 
         return latest_user_run.score
@@ -105,6 +103,7 @@ class ScoreView(generics.GenericAPIView):
         score = round((right_answers * 100) / len(game_data), 2)
         latest_user_run.score = score
         latest_user_run.state = RunStatus.FINISHED.value
+        latest_user_run.end_date = datetime.now(timezone.utc)
         latest_user_run.save()
 
         return score
@@ -125,6 +124,7 @@ class ScoreView(generics.GenericAPIView):
             latest_user_run.score = score
 
         latest_user_run.state = RunStatus.FINISHED.value
+        latest_user_run.end_date = datetime.now(timezone.utc)
         latest_user_run.save()
         return score
 
