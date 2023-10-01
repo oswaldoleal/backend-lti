@@ -1,9 +1,12 @@
+from math import floor
+
+from django.db.models import Max, F, Count
 from rest_framework import generics
 from rest_framework.response import Response
-from api.models import Assignment, GameData, Run
-from api.serializers import AssignmentSerializer
-from django.db.models import Max, F, Count
-from math import floor
+
+from api.models import Run
+from canvas.models import AvatarConfig
+
 
 class AssignmentStatsView(generics.RetrieveAPIView):
 
@@ -18,6 +21,13 @@ class AssignmentStatsView(generics.RetrieveAPIView):
         leaderboard_runs = Run.objects.all().filter(assignment=assignment_id).values('user', 'user__name').annotate(Max('score'))
         sorted_runs = [r for r in leaderboard_runs]
         sorted_runs.sort(key= lambda r : r['score__max'], reverse=True)
+        configs = AvatarConfig.objects.filter(user__in=[x['user'] for x in leaderboard_runs])
+
+        for config in configs:
+            for leaderboard_run in sorted_runs:
+                if leaderboard_run['user'] == config.user_id:
+                    leaderboard_run['avatar_config'] = config.config
+
         data['leaderboard'] = {
             'data': sorted_runs,
         }
