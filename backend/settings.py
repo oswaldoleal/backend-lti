@@ -20,7 +20,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-1riga3=+43&2b&^ve+47yw_+pms(xpb+3&-dwedt@)4nokj(o2'
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -45,6 +45,10 @@ INSTALLED_APPS = [
     'canvas',
     'corsheaders',
 ]
+
+MIGRATION_MODULES = {
+    'lti1p3_tool_config': 'api.third_party',
+}
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
